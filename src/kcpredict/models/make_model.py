@@ -7,12 +7,13 @@ Created on Mon Oct 03 22:00:00 2022
 Train a model and test it.
 """
 import click
+import glob
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from joblib import dump, load  # To save model
 
-from .. neptune.log_neptune import log_neptune
+# from .. neptune.log_neptune import log_neptune
 
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
@@ -62,38 +63,47 @@ def setup_model(model, size):
     return scikit_model
 
 
-def train_model(model, X_train, y_train):
-    model.fit(X_train, y_train.values.ravel())
+def train_model(model, k):
+    train = pd.read_pickle(ROOT_DIR/'data/processed'/f'train_fold_{k}.pickle')
+    X_train = train.iloc[:, :-1]
+    y_train = train.iloc[:, -1].values.ravel()
+    model.fit(X_train, y_train)
     return model
 
 
-def test_model(model, X_test, y_test):
+def test_model(model, k):
+    test = pd.read_pickle(ROOT_DIR/'data/processed'/f'test_fold_{k}.pickle')
+    X_test, y_test = test.iloc[:, :-1], test.iloc[:, -1]
     r2 = model.score(X_test, y_test)
-    print(f'\nR2 score on test: {r2:.4f}')
+    print(f'R2 score on test {k}: {r2:.4f}')
     return r2
 
 
 def save_model(model):
     dump(model, ROOT_DIR/'models'/'rf.joblib')
+    return None
 
 
-def log_run(run):
-    print(run)
+def log_run(model, size, scores):
+    print(model)
+    print(f'Scores Mean: {scores.mean():.4f}')
+    print(f'Score Variance: {scores.var():.4f}')
+    return None
 
 
 def main(model, size, log):
-    run = {"tags": ["ml", "crop_coefficient"]}
     print(f'\n\n{"-"*5} {model.upper()} MODEL TRAINING {"-"*5}\n\n')
-    df = get_data()
-    X_train, X_test, y_train, y_test = make_sets(df)
-    
     model = setup_model(model, size)
-
-    model = train_model(model, X_train, y_train)
-    run["test_score"] = test_model(model, X_test, y_test)  # type: ignore
+    # Find folds data
+    k = len(list(ROOT_DIR.glob('data/processed/test_fold_*')))
+    scores = list()
+    for fold in range(k):
+        model = train_model(model, fold)
+        test_score = test_model(model, fold)
+        scores.append(test_score)
     save_model(model)
     if log:
-        log_run(run)
+        log_run(model, size, np.array(scores))
     
     print(f'\n\n{"-"*30}\n\n')
 
@@ -110,6 +120,8 @@ def main(model, size, log):
 def make_model(model, size, log):
     """
     Train a Machine Learning model and test it.
+    Training and testing is implemented on k-folds of data.
+    The mean score (R2) and score variance are returned.
     """
     main(model, size, log)
     return None
