@@ -1,0 +1,4 @@
+Metadata-Version: 2.1
+Name: kcpredict
+Version: 0.1.0
+Summary: Code to predict crop coefficient with Machine Learning models

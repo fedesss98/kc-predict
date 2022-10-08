@@ -13,7 +13,7 @@ import os
 import pandas as pd
 
 from pathlib import Path
-ROOT_DIR = Path(__file__).parent.parent.parent.parent
+ROOT_DIR = Path(__file__).parent.parent.parent
 
 
 def get_features(df):
@@ -22,7 +22,6 @@ def get_features(df):
         'Tmax', 'SWC', 'NDVI', 'NDWI', 'DOY'
         ]
     return df.loc[:, features]
-
 
 def get_target(df):
     target = ['ETa']
@@ -45,6 +44,20 @@ def make_pickle(df, out):
         print("Something went wrong writing Pickle file.\nTry again")
     
 
+# Click module enable command line optional arguments
+@click.command()
+# Input file name can be given in command line
+@click.option('-in', '--input-file',
+              type=click.Path(),
+              default=(ROOT_DIR/'data/interim'/'db_villabate_deficit_6.csv'),
+             )
+# Outuput file name can be given in command line
+@click.option('-out', '--output-file', 
+              type=click.Path(),
+              default=(ROOT_DIR/'data/interim'/'db_villabate.pickle'),
+             )
+# Optionally save the plot of the dataframe
+@click.option('-v', '--visualize', is_flag=True,)
 def main(input_file, output_file, visualize):
     print(f'\n\n{"-"*5} MAKE DATA {"-"*5}\n\n')
     data = get_csv_data(input_file)
@@ -54,24 +67,7 @@ def main(input_file, output_file, visualize):
         data.plot(subplots=True, figsize=(10, 16))
         plt.savefig(ROOT_DIR/'visualization/data'/'raw_data.png')
     print(f'\n\n{"-"*21}')
-    return None
-
-
-@click.command()
-@click.option('-in', '--input-file',
-              type=click.Path(),
-              default=(ROOT_DIR/'data/raw'/'data.csv'),)
-@click.option('-out', '--output-file', 
-              type=click.Path(),
-              default=(ROOT_DIR/'data/interim'/'data.pickle'),)
-@click.option('-v', '--visualize', is_flag=True,)
-def make_data(input_file, output_file, visualize):
-    """
-    Read raw CSV file and save the dataframe in a Pickle file.
-    """
-    main(input_file, output_file, visualize)
-    return None
-
+    
 
 if __name__ == "__main__":
-    make_data()
+    main()

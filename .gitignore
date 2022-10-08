@@ -2,8 +2,11 @@
 data/raw
 data/interim/
 data/processed/
-models/
+models/*.joblib
 visualization/**/
+docs/tokens.txt
+notebook/
+.neptune/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -13,26 +16,26 @@ __pycache__/
 # C extensions
 *.so
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-pip-wheel-metadata/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+# # Distribution / packaging
+# .Python
+# build/
+# develop-eggs/
+# dist/
+# downloads/
+# eggs/
+# .eggs/
+# lib/
+# lib64/
+# parts/
+# sdist/
+# var/
+# wheels/
+# pip-wheel-metadata/
+# share/python-wheels/
+# *.egg-info/
+# .installed.cfg
+# *.egg
+# MANIFEST
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -134,3 +137,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# VSCode
+launch.json
+settings.json
