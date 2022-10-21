@@ -8,29 +8,48 @@ Preprocess ETa data for predictions.
 
 - Select features
 - Impute missing values with KNNImputer
+- Split data with KFolds
 - Scale data with StandardScaler or MinMaxScaler
 
+Train set must never see test set, even during the scaling.
+Thus the k-folds slpit must come before the scaling.
 """
 import click
 import matplotlib.pyplot as plt
 import numpy as np
-import os
+from json import load, dump
 import pandas as pd
 
 from sklearn.impute import KNNImputer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.model_selection import KFold
 
-from make_data import get_features, get_target, make_pickle
+from .make_data import  make_pickle
 
 from pathlib import Path
-ROOT_DIR = Path(__file__).parent.parent.parent
+ROOT_DIR = Path(__file__).parent.parent.parent.parent
 
 NN = 5  # Number of neighboring samples to use for imputation
-    
+K = 10
+
 
 def get_data(fname):
     df = pd.read_pickle(fname)
     return df
+
+
+
+def get_features(df):
+    features = [
+        'Rs', 'U2', 'RHmin', 'RHmax', 'Tmin', 
+        'Tmax', 'SWC', 'NDVI', 'NDWI', 'DOY', 'ETo'
+        ]
+    return df.loc[:, features]
+
+
+def get_target(df):
+    target = ['ETa']
+    return df.loc[:, target]
 
 
 def make_dataframe(data):
@@ -40,6 +59,7 @@ def make_dataframe(data):
     # Concatenate features and target data
     df = pd.concat([features, target], axis=1)
     return df
+
 
 def impute_features(df):
     features = get_features(df)
@@ -56,6 +76,17 @@ def impute_features(df):
                                 columns=df.columns, index=df.index)
     return imputed_data
 
+
+def split_folds(df):
+    folds = KFold(K, shuffle=True)
+    df = df.dropna()
+    for k, [train_index, test_index] in enumerate(folds.split(df)):
+        train = df.iloc[train_index]
+        test = df.iloc[test_index]
+        make_pickle(train, ROOT_DIR/'data/processed'/f'train_fold_{k}.pickle')
+        make_pickle(test, ROOT_DIR/'data/processed'/f'test_fold_{k}.pickle')
+
+
 def scale_data(df, scaler):
     """
     Scale data using selected scaler:
@@ -71,41 +102,83 @@ def scale_data(df, scaler):
                                columns=df.columns, index=df.index)
     return scaled_data
 
-@click.command()
-@click.option('-in', '--input-file',
-              type=click.Path(),
-              default=(ROOT_DIR /'data/interim'/'db_villabate.pickle'),
-              )
-@click.option('-s', '--scaler', default='MinMax', 
-              type=click.Choice(['Standard', 'MinMax'], case_sensitive=False))
-@click.option('-out', '--output-file', 
-              type=click.Path(),
-              default=(ROOT_DIR/'data/processed'/'processed.pickle'),
-              )
-# Optionally save the plot of the dataframe
-@click.option('-v', '--visualize', is_flag=True,)
+
+# def write_log(input_file, scaler, output_file, visualize, df, train, test):
+#     json_log = {
+#         "input_file": input_file,
+#         "output_file": output_file,
+#         "scaler": scaler,
+#         "database_shape": df.shape(),
+#         "train_set_length": len(train),
+#         "test_set_length": len(test),
+#     }
+#     dump(json_log, ROOT_DIR/'docs'/'run.json')
+
+
 def main(input_file, scaler, output_file, visualize):
-    print(f'\n\n{"-"*5} PREPROCESSING {"-"*5}')
-    print(input_file)
+    print(f'\n\n{"-"*5} PREPROCESSING {"-"*5}\n\n')
+    print("Preprocessing file:\n", input_file)
     data = get_data(input_file)
     df = make_dataframe(data)
-    df.plot(subplots=True, figsize=(10, 16))
     if visualize:
+        df.plot(subplots=True, figsize=(10, 16))
         plt.show()        
     # IMPUTE
     df = impute_features(df)
-    # SCALE
-    df = scale_data(df, scaler)
-    # SAVE AND VISUALIZE
+    # SAVE AND VISUALIZE TOTAL DATAFRAME
     make_pickle(df, output_file) 
-    df.plot(subplots=True, figsize=(10, 16))
     if visualize:
+        df.plot(subplots=True, figsize=(10, 16))
         plt.savefig(ROOT_DIR/
                     'visualization/data'/
                     f'processed_{NN}_{scaler}.png')
         plt.show()
+    # SAVE DATA TO PREDICT
+    predict = df.loc[~df.index.isin(df.dropna().index)]
+    make_pickle(predict, ROOT_DIR/'data/processed'/'predict.pickle')
+    # SPLIT DATA TO TRAIN - TEST
+    split_folds(df)
+    # Iterate over folds
+    for k in range(K):
+        train_file = ROOT_DIR/'data/processed'/f'train_fold_{k}.pickle'
+        test_file = ROOT_DIR/'data/processed'/f'test_fold_{k}.pickle'
+        train = pd.read_pickle(train_file)
+        test = pd.read_pickle(test_file)
+        # SCALE FOLD
+        train = scale_data(train, scaler)
+        test = scale_data(test, scaler)
+        # SAVE FOLD
+        make_pickle(train, train_file)
+        make_pickle(test, test_file)
+    # write_log(input_file, scaler, output_file, visualize, df, train, test)
     print(f'\n\n{"-"*11}')
+
+
+@click.command()
+@click.option('-in', '--input-file',
+              type=click.Path(),
+              default=(ROOT_DIR /'data/interim'/'db_villabate.pickle'),)
+@click.option('-s', '--scaler', default='MinMax', 
+              type=click.Choice(['Standard', 'MinMax'], case_sensitive=False))
+@click.option('-out', '--output-file', 
+              type=click.Path(),
+              default=(ROOT_DIR/'data/processed'/'processed.pickle'),)
+@click.option('-v', '--visualize', is_flag=True,)
+def preprocess_data(input_file, scaler, output_file, visualize):
+    """
+    Preprocess ETa data for predictions.
+
+    - Select features
+    - Impute missing values with KNNImputer
+    - Split data with KFolds
+    - Scale data with StandardScaler or MinMaxScaler
+
+    Train set must never see test set, even during the scaling.
+    Therefore K-folds slpit must come before the scaling.
+
+    """
+    main(input_file, scaler, output_file, visualize)
     
 
 if __name__ == "__main__":
-    main()
+    preprocess_data()

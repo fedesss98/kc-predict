@@ -9,6 +9,7 @@ Read CSV data and make Pickle File
 import click
 import matplotlib.pyplot as plt
 import numpy as np
+import openpyxl
 import os
 import pandas as pd
 
@@ -16,25 +17,17 @@ from pathlib import Path
 ROOT_DIR = Path(__file__).parent.parent.parent.parent
 
 
-def get_features(df):
-    features = [
-        'Rs', 'U2', 'RHmin', 'RHmax', 'Tmin', 
-        'Tmax', 'SWC', 'NDVI', 'NDWI', 'DOY'
-        ]
-    return df.loc[:, features]
-
-
-def get_target(df):
-    target = ['ETa']
-    return df.loc[:, target]
-
-
-def get_csv_data(fname):
-    df = pd.read_csv(fname, sep=';', decimal=',',
-                     index_col=0, parse_dates=True)
-    # Some column of the csv use dots as decimal separators
-    # so those columns are interpreted as object type and
-    # must be casted to floats
+def get_raw_data(fname):
+    if str(fname).endswith('.csv'):
+        df = pd.read_csv(fname, sep=';', decimal=',',
+                         index_col=0, parse_dates=True)
+    elif str(fname).endswith('.xlsx'):
+        df = pd.read_excel(fname, decimal=',',
+                           index_col=0, parse_dates=True)
+        df['SWC'] = df['SWC'].replace(0, np.NaN)
+    # Some column of the file may use dots as decimal
+    # separators, so those columns are interpreted as 
+    # object type and must be casted to floats
     return df.astype(np.float64)
 
 
@@ -47,8 +40,12 @@ def make_pickle(df, out):
 
 def main(input_file, output_file, visualize):
     print(f'\n\n{"-"*5} MAKE DATA {"-"*5}\n\n')
-    data = get_csv_data(input_file)
-    print(data)
+    data = get_raw_data(input_file)
+    print(f'The file:\n'
+          f'{input_file}\n'
+          f'has the shape {data.shape} with columns:')
+    for c in data.columns:
+        print(c)
     make_pickle(data, output_file)
     if visualize:
         data.plot(subplots=True, figsize=(10, 16))
@@ -59,8 +56,8 @@ def main(input_file, output_file, visualize):
 
 @click.command()
 @click.option('-in', '--input-file',
-              type=click.Path(),
-              default=(ROOT_DIR/'data/raw'/'data.csv'),)
+              type=click.Path(exists=True),
+              default=(ROOT_DIR/'data/raw'/'data.xlsx'),)
 @click.option('-out', '--output-file', 
               type=click.Path(),
               default=(ROOT_DIR/'data/interim'/'data.pickle'),)

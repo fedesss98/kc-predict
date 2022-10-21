@@ -12,12 +12,15 @@ import numpy as np
 import pandas as pd
 from joblib import dump, load  # To save model
 
+# from .. neptune.log_neptune import log_neptune
+
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.neural_network import MLPRegressor
 
 from pathlib import Path
-ROOT_DIR = Path(__file__).parent.parent.parent
+ROOT_DIR = Path(__file__).parent.parent.parent.parent
+
 
 
 def get_features(df):
@@ -46,31 +49,62 @@ def make_sets(df):
     return train_test_sets
 
 
-def make_model(model, size):
+def setup_model(model, size):
     model = "".join(model)
     if model == 'rf':
-        model = RandomForestRegressor(n_estimators=size)
+        scikit_model = RandomForestRegressor(n_estimators=size)
     elif model == 'mlp':
-        model = MLPRegressor(hidden_layer_sizes=size)
-    for key, value in model.get_params().items():
+        scikit_model = MLPRegressor(hidden_layer_sizes=size)
+    else:
+        raise Exception('Model not found.')
+    for key, value in scikit_model.get_params().items():
         print(f'{key:25} : {value}')
+    return scikit_model
+
+
+def train_model(model, k):
+    train = pd.read_pickle(ROOT_DIR/'data/processed'/f'train_fold_{k}.pickle')
+    X_train = train.iloc[:, :-1]
+    y_train = train.iloc[:, -1].values.ravel()
+    model.fit(X_train, y_train)
     return model
 
 
-def train_model(model, X_train, y_train):
-    model.fit(X_train, y_train.values.ravel())
-    return model
-
-
-def test_model(model, X_test, y_test):
+def test_model(model, k):
+    test = pd.read_pickle(ROOT_DIR/'data/processed'/f'test_fold_{k}.pickle')
+    X_test, y_test = test.iloc[:, :-1], test.iloc[:, -1]
     r2 = model.score(X_test, y_test)
-    print(f'\nR2 score on test: {r2:.4f}')
-    return None
+    print(f'R2 score on test {k}: {r2:.4f}')
+    return r2
 
 
 def save_model(model):
     dump(model, ROOT_DIR/'models'/'rf.joblib')
+    return None
 
+
+def log_run(model, size, scores):
+    print(model)
+    print(f'Scores Mean: {scores.mean():.4f}')
+    print(f'Score Variance: {scores.var():.4f}')
+    return None
+
+
+def main(model, size, log):
+    print(f'\n\n{"-"*5} {model.upper()} MODEL TRAINING {"-"*5}\n\n')
+    model = setup_model(model, size)
+    # Find folds data
+    k = len(list(ROOT_DIR.glob('data/processed/test_fold_*')))
+    scores = list()
+    for fold in range(k):
+        model = train_model(model, fold)
+        test_score = test_model(model, fold)
+        scores.append(test_score)
+    save_model(model)
+    if log:
+        log_run(model, size, np.array(scores))
+    
+    print(f'\n\n{"-"*30}\n\n')
 
 @click.command()
 # Use Random Forest
@@ -78,20 +112,19 @@ def save_model(model):
 # Use Neural Network
 @click.option('-mlp', '--multi-layer-perceptron', 'model', flag_value='mlp')
 # Size of the forest/network
-@click.option('--size', default=100)
-def main(model, size):
-    print(f'\n\n{"-"*5} {model.upper()} MODEL TRAINING {"-"*5}\n')
-    df = get_data()
-    X_train, X_test, y_train, y_test = make_sets(df)
-    
-    model = make_model(model, size)
-
-    model = train_model(model, X_train, y_train)
-    test_model(model, X_test, y_test)
-    save_model(model)
-    
-    print(f'\n\n{"-"*30}\n\n')
+@click.option('--size', default=100, 
+              help='Size of the forest/network')
+@click.option('--log', is_flag=True,
+              help='Log training to Neptune')
+def make_model(model, size, log):
+    """
+    Train a Machine Learning model and test it.
+    Training and testing is implemented on k-folds of data.
+    The mean score (R2) and score variance are returned.
+    """
+    main(model, size, log)
+    return None
 
 
 if __name__ == "__main__":
-    main()
+    make_model()
