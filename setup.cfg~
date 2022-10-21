@@ -1,0 +1,17 @@
+[metadata]
+name = kcpredict
+version = 0.1.0
+description = Code to predict crop coefficient with Machine Learning models
+
+[options]
+package_dir=
+    =src
+packages=find:
+install_requires = click
+
+[options.packages.find]
+where=src
+
+[options.entry_points]
+console_scripts =
+    kc-predict = kcpredict.cli:cli
