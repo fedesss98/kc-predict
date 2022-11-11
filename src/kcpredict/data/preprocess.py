@@ -48,7 +48,11 @@ def get_data(fname):
 def get_features(df):
     features = [
         'Rs', 'U2', 'RHmin', 'RHmax', 'Tmin', 
-        'Tmax', 'SWC', 'DOY', 'ETo'
+        'Tmax', 'SWC', 
+        'DOY', 
+        'Month', 
+        'Week', 
+        'ETo'
         ]
     return df.loc[:, features]
 

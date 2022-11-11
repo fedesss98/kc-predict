@@ -25,6 +25,8 @@ def get_raw_data(fname):
         df = pd.read_excel(fname, decimal=',',
                            index_col=0, parse_dates=True)
         df['SWC'] = df['SWC'].replace(0, np.NaN)
+        df['Week'] = pd.Series(df.index).dt.isocalendar().week.values
+        df['Month'] = df.index.month
     # Some column of the file may use dots as decimal
     # separators, so those columns are interpreted as 
     # object type and must be casted to floats

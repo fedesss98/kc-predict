@@ -31,14 +31,14 @@ PREPROCESS_PARAMETERS = {
     'input_file': ROOT_DIR/'data/interim/data.pickle',
     'scaler': 'MinMax',
     'folds': 5,
-    'k_seed': 5487,
+    'k_seed': 24,
     'output_file': ROOT_DIR/'data/processed/processed.pickle',
     'visualize': True,
     }
 
 MODEL_PARAMETERS = {
     'n_estimators': 100,
-    'random_state': 36485,
+    'random_state': 12,
     }
 
 PREDICTION_PARAMETERS = {
