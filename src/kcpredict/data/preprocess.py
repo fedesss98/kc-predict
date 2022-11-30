@@ -44,7 +44,6 @@ def get_data(fname):
     return df
 
 
-
 def get_features(df):
     features = [
         'Rs', 'U2', 'RHmin', 'RHmax', 'Tmin', 
@@ -69,6 +68,7 @@ def make_dataframe(data):
     # Concatenate features and target data
     df = pd.concat([features, target], axis=1)
     return df
+
 
 def make_scaler(scaler):
     if isinstance(scaler, str):

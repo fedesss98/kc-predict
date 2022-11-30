@@ -5,6 +5,7 @@ Created on Mon Oct 03 22:00:00 2022
 @author: Federico Amato
 
 Train a model and test it.
+Validation on 2022 measures.
 """
 import click
 import matplotlib.pyplot as plt
@@ -51,18 +52,28 @@ def log_run(model, size, scores):
     return None
 
 
+def log_model_scores(scores):
+    scores = pd.DataFrame(scores, columns=['Test Scores'])
+    scores.to_csv(ROOT_DIR/'logs\models_scores.csv')
+    return None
+
+
 def main(model, model_name, *args, **kwargs):
     print(f'\n\n{"-"*5} MODEL TRAINING {"-"*5}\n\n')
     # Find folds data
     k = len(list(ROOT_DIR.glob('data/processed/test_fold_*')))
+    models = dict()
     scores = np.zeros(k)
     for fold in range(k):
-        model = train_model(model, fold)
+        models[fold] = train_model(model, fold)
         test_score = test_model(model, fold)
         scores[fold] = test_score
+    log_model_scores(scores)
     print(f'Scores Mean: {scores.mean():.4f}')
     print(f'Score Variance: {scores.var():.4f}')
-    save_model(model_name, model)
+    # Save the best scoring model
+    best_model = models[np.argmax(scores)]
+    save_model(model_name, best_model)
     # if log:
     #     log_run(model, np.array(scores), **kwargs)
     print(f'\n\n{"-"*30}\n\n')
@@ -162,6 +173,5 @@ make_model.add_command(mlp)
 make_model.add_command(svr)
 make_model.add_command(gpr)
 
-
 if __name__ == "__main__":
-    make_model()
+    rf()

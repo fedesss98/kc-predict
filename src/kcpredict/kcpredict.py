@@ -44,11 +44,12 @@ MODEL_PARAMETERS = {
 PREDICTION_PARAMETERS = {
     'model': 'rf.joblib',
     'output': ROOT_DIR/'data/predicted'/'predicted.pickle',
-    'visualize': True,
+    'visualize': False,
     }
 
 POSTPROCESS_PARAMETERS = {
-    'visualize': True,
+    'contamination': 0.01,
+    'visualize': False,
     }
 
 # %% MAIN

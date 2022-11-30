@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from predict import plot_prediction
+from .predict import plot_prediction
 
 from sklearn.ensemble import IsolationForest
 
@@ -106,15 +106,6 @@ def make_trapezoidal(df):
     trpz.to_pickle(ROOT_DIR/'data/predicted'/'trapezoidal.pickle')
     trpz.to_csv(ROOT_DIR/'data/predicted'/'trapezoidal.csv')
     return trpz
-    
-
-def get_measured_trapezoidal(df):
-    """
-    Mid Season: 1Mag - 31Ago
-    Initial Season: 1Gen - 31Mar
-    Final Season: 1Nov - 31Dec
-    """
-    return df
 
 
 def add_plot_trapezoidal(ax, measures=None):
@@ -171,18 +162,20 @@ def make_plot(*frames, trapezoidal=True, measures=True, sma=False, predictions=T
     
     ax.set_ylim(0, 1.4)
     ax.legend()
-    ax.grid(axis='x', linestyle='--')
+    ax.grid(axis='both', linestyle='--')
     plt.show()
     return ax
 
 # %%
-def main(visualize):
+def main(visualize, contamination=0.01):
     kc = pd.read_pickle(ROOT_DIR/'data/predicted'/'predicted.pickle')
     
-    detector = IsolationForest(contamination=0.0012, random_state=352)
+    detector = IsolationForest(contamination=contamination, random_state=352)
     kc_inlier = remove_outliers(kc, detector)
     kc_denoised = remove_noise(kc_inlier)    
     kc_filtered = swc_filter(kc_denoised)
+    
+    kc_filtered.to_csv(ROOT_DIR/'data/predicted'/'postprocessed.csv')
     
     if visualize:
         plot_prediction(kc, 'Kc')
@@ -190,9 +183,9 @@ def main(visualize):
         plot_prediction(kc_denoised, 'Kc', title='Noise Removed')
         plot_prediction(kc_filtered, 'Kc', title='Filtered by SWC')
         
-    kc_trapezoidal = make_trapezoidal(kc_filtered)
+    kc_trapezoidal = make_trapezoidal(kc_filtered.copy())
     
-    # make_plot(kc_filtered, predictions=False)
+    make_plot(kc_filtered, predictions=False)
     make_plot(kc_filtered, kc_trapezoidal)
     # make_plot(kc_filtered, measures=False)
     
@@ -204,4 +197,4 @@ def polish_kc(visualize):
     main(visualize)
 
 if __name__ == "__main__":
-    main(visualize=False)
+    main(visualize=False, contamination=0.0015)

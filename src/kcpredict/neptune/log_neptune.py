@@ -24,6 +24,10 @@ def log_neptune():
     return None
 
 
+def start_neptune():
+    pass
+
+
 if __name__ == "__main__":
     log_neptune()
 
