@@ -2,9 +2,8 @@
 desktop.ini
 
 # Folders
-data/raw
-data/interim/
-data/processed/
+data/
+logs/
 models/*.joblib
 visualization/**/
 docs/tokens.txt

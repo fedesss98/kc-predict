@@ -13,6 +13,9 @@ Preprocess ETa data for predictions.
 
 Train set must never see test set, even during the scaling.
 Thus the k-folds slpit must come before the scaling.
+
+FREE PARAMS:
+    - NN: number of neighbors for KNNInputer
 """
 import click
 import matplotlib.pyplot as plt
@@ -20,7 +23,7 @@ import numpy as np
 import joblib  # To save scaler
 import json  # To save log
 import pandas as pd
-from sys import exit
+import logging
 
 from sklearn.impute import KNNImputer
 # explicitly require this experimental feature
@@ -44,15 +47,20 @@ def get_data(fname):
     return df
 
 
-def get_features(df):
-    features = [
-        'Rs', 'U2', 'RHmin', 'RHmax', 'Tmin', 
-        'Tmax', 'SWC', 
-        'DOY', 
-        'Month', 
-        'Week', 
-        'ETo'
-        ]
+def get_features(df, features):
+    if len(features) <= 0:
+        features = [
+            'Rs', 'U2', 'RHmin', 'RHmax', 'Tmin', 
+            'Tmax', 'SWC', 
+            'DOY', 
+            'Month', 
+            'Week', 
+            'ETo'
+            ]
+    for f in features:
+        if f not in df.columns:
+            print(f"Feature {f} not present in raw data features!")
+            features.remove(f)
     return df.loc[:, features]
 
 
@@ -61,9 +69,9 @@ def get_target(df):
     return df.loc[:, target]
 
 
-def make_dataframe(data):
+def make_dataframe(data, features):
     """Selects only relevant features (Model #1 in previous experiments)"""
-    features = get_features(data)
+    features = get_features(data, features)
     target = get_target(data)
     # Concatenate features and target data
     df = pd.concat([features, target], axis=1)
@@ -80,12 +88,12 @@ def make_scaler(scaler):
         try:
             scaler.set_params()
         except Exception as e:
-            exit(f'Error with the scaler:\n{str(e)}')
+            raise Exception(f'Error with the scaler:\n{str(e)}')
     return scaler
 
 
-def impute_features(df):
-    features = get_features(df)
+def impute_features(df, features):
+    features = get_features(df, features)
     # Impute missing features
     # imputer = KNNImputer(n_neighbors=NN, weights='distance')
     imputer = IterativeImputer(random_state=0)
@@ -141,17 +149,17 @@ def scale_data(df, scaler):
 #     json.dump(json_log, ROOT_DIR/'docs'/'run.json')
 
 
-def main(input_file, scaler, folds, k_seed, output_file, visualize):
-    print(f'\n\n{"-"*5} PREPROCESSING {"-"*5}\n\n')
-    print("Preprocessing file:\n", input_file)
+def main(input_file, scaler, folds, k_seed, output_file, features=[], visualize=True):
+    logging.info(f'\n\n{"-"*5} PREPROCESSING {"-"*5}\n\n')
+    logging.info(f"Preprocessing file:\n{input_file}")
     data = get_data(input_file)
-    df = make_dataframe(data)
+    df = make_dataframe(data, features)
     scaler = make_scaler(scaler)
     if visualize:
         df.plot(subplots=True, figsize=(10, 16))
         plt.show()        
     # IMPUTE
-    df = impute_features(df)
+    df = impute_features(df, features)
     # SAVE AND VISUALIZE TOTAL DATAFRAME
     make_pickle(df, ROOT_DIR/'data/interim'/'imputed.pickle') 
     if visualize:
@@ -161,7 +169,7 @@ def main(input_file, scaler, folds, k_seed, output_file, visualize):
                     f'processed_{NN}_{scaler}.png')
         plt.show()
     # SAVE DATA TO PREDICT
-    predict = df.loc[~df.index.isin(df.dropna().index), 'Rs':'ETo']
+    predict = df.loc[~df.index.isin(df.dropna().index), features]
     predict = scale_data(predict, scaler)
     make_pickle(predict, ROOT_DIR/'data/processed'/'predict.pickle')
     # SPLIT DATA TO TRAIN - TEST
@@ -181,7 +189,7 @@ def main(input_file, scaler, folds, k_seed, output_file, visualize):
     # write_log(input_file, scaler, output_file, visualize, df, train, test)
     df = scale_data(df, scaler)
     make_pickle(df, output_file)
-    print(f'\n\n{"-"*22}')
+    logging.info(f'\n\n{"/"*30}')
 
 
 @click.command()
@@ -209,7 +217,7 @@ def preprocess_data(input_file, scaler, k, k_seed, output_file, visualize):
     Therefore K-folds slpit must come before the scaling.
 
     """
-    main(input_file, scaler, k, k_seed, output_file, visualize)
+    main(input_file, scaler, k, k_seed, output_file, visualize=visualize)
     
 
 if __name__ == "__main__":

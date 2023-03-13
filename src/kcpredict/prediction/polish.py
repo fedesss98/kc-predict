@@ -67,6 +67,12 @@ def get_trapezoidal():
     return df
 
 
+def save_data(df, filename):
+    df.to_csv(ROOT_DIR / 'data/predicted' / f'{filename}.csv')
+    df.to_pickle(ROOT_DIR / 'data/predicted' / f'{filename}.pickle')
+    return None
+
+
 def make_trapezoidal(df):
     """
     Mid Season: 1Mag - 31Ago
@@ -167,15 +173,20 @@ def make_plot(*frames, trapezoidal=True, measures=True, sma=False, predictions=T
     return ax
 
 # %%
-def main(visualize, contamination=0.01):
+def main(outfile, visualize, contamination=0.01, seed=352):
+    print(f'{"-"*5} POLISH KC {"-"*5}')
     kc = pd.read_pickle(ROOT_DIR/'data/predicted'/'predicted.pickle')
     
-    detector = IsolationForest(contamination=contamination, random_state=352)
+    # Outlier removal
+    detector = IsolationForest(contamination=contamination, random_state=seed)
     kc_inlier = remove_outliers(kc, detector)
+    # Seasonal decomposition: take seasonal and mean trend and remove noise
     kc_denoised = remove_noise(kc_inlier)    
+    # SWC filter: take data with SWC > 0.21
     kc_filtered = swc_filter(kc_denoised)
     
-    kc_filtered.to_csv(ROOT_DIR/'data/predicted'/'postprocessed.csv')
+    save_data(kc_filtered, outfile)
+    
     
     if visualize:
         plot_prediction(kc, 'Kc')
@@ -188,6 +199,8 @@ def main(visualize, contamination=0.01):
     make_plot(kc_filtered, predictions=False)
     make_plot(kc_filtered, kc_trapezoidal)
     # make_plot(kc_filtered, measures=False)
+    
+    print(f'\n\n{"-"*21}')
     
     return None    
 

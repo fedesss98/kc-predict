@@ -11,72 +11,175 @@ import click
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 from joblib import dump, load  # To save model
+
+import logging
 
 # from .. neptune.log_neptune import log_neptune
 
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.neural_network import MLPRegressor
+from sklearn.neighbors import KNeighborsRegressor
 from sklearn.svm import SVR
 from sklearn.gaussian_process import GaussianProcessRegressor
+
+from sklearn.metrics import mean_squared_error, r2_score
 
 from pathlib import Path
 ROOT_DIR = Path(__file__).parent.parent.parent.parent
 
 
-def train_model(model, k):
-    train = pd.read_pickle(ROOT_DIR/'data/processed'/f'train_fold_{k}.pickle')
-    X_train = train.iloc[:, :-2]
-    y_train = train.iloc[:, -1].values.ravel()
-    model.fit(X_train, y_train)
-    return model
+class ModelTrainer:
+    def __init__(self, model, model_name, features, visualize_error=False, **kwargs):
+        logging.info(f'\n\n{"-"*7} {model_name.upper()} MODEL TRAINING {"-"*7}\n\n')
+        
+        self.features = features
+        self.model = model
+        self.model_name = model_name
+        # Relative Error DataFrame
+        self.kt = pd.DataFrame()
+        # Find folds data
+        k = len(list(ROOT_DIR.glob('data/processed/test_fold_*')))
+        models = dict()
+        self.scores = np.zeros((k, 2))
+        for fold in range(k):
+            trained_model= self.train_model(self.model, fold)
+            models[fold] = trained_model
+            self.scores[fold] = self.test_model(trained_model, fold)
+        if visualize_error:
+            self.print_error()
+        self.log_model_scores()
+        logging.info(f'R2 Scores Mean: {self.scores.mean(axis=0)[0]:.2f}')
+        logging.info(f'R2 Scores Max: {self.scores.max(axis=0)[0]:.2f}')
+        logging.info(f'Score Variance: {self.scores.var(axis=0)[0]:.4f}')
+        # Save the best scoring model
+        self.best_model = models[np.argmax(self.scores, axis=0)[0]]
+        self.save_model()
+        # if log:
+        #     log_run(model, np.array(scores), **kwargs)
+        logging.info(f'\n\n{"/"*30}\n')
+        return None
 
+    @staticmethod
+    def error_function(x):
+        """
+        Set 1
+        a = .5
+        phase = -.5
+        q = 0.2
+        d = 10
+        v = 60 * 1/(x+d)
+        """
+        # Parameters
+        a = .5
+        phase = -.5
+        q = 0.2
+        d = 10
+        v = 60 * 1/(x+d)
+        # Shifted Sine function
+        y = a*np.sin(np.pi*v*x - np.pi*phase) - q
+        return y
+    
 
-def test_model(model, k):
-    test = pd.read_pickle(ROOT_DIR/'data/processed'/f'test_fold_{k}.pickle')
-    X_test, y_test = test.iloc[:, :-2], test.iloc[:, -1]
-    r2 = model.score(X_test, y_test)
-    print(f'R2 score on test {k}: {r2:.4f}')
-    return r2
-
-
-def save_model(model_name, model):
-    dump(model, ROOT_DIR/'models'/f'{model_name}.joblib')
-    return None
-
-
-def log_run(model, size, scores):
-    print(model)
-    print(f'Scores Mean: {scores.mean():.4f}')
-    print(f'Score Variance: {scores.var():.4f}')
-    return None
-
-
-def log_model_scores(scores):
-    scores = pd.DataFrame(scores, columns=['Test Scores'])
-    scores.to_csv(ROOT_DIR/'logs\models_scores.csv')
-    return None
-
-
-def main(model, model_name, *args, **kwargs):
-    print(f'\n\n{"-"*5} MODEL TRAINING {"-"*5}\n\n')
-    # Find folds data
-    k = len(list(ROOT_DIR.glob('data/processed/test_fold_*')))
-    models = dict()
-    scores = np.zeros(k)
-    for fold in range(k):
-        models[fold] = train_model(model, fold)
-        test_score = test_model(model, fold)
-        scores[fold] = test_score
-    log_model_scores(scores)
-    print(f'Scores Mean: {scores.mean():.4f}')
-    print(f'Score Variance: {scores.var():.4f}')
-    # Save the best scoring model
-    best_model = models[np.argmax(scores)]
-    save_model(model_name, best_model)
-    # if log:
-    #     log_run(model, np.array(scores), **kwargs)
-    print(f'\n\n{"-"*30}\n\n')
+    def train_model(self, model, k):
+        train = pd.read_pickle(ROOT_DIR/'data/processed'/f'train_fold_{k}.pickle')
+        X_train = train.loc[:, self.features]
+        y_train = train.loc[:, 'ETa'].values.ravel()
+        model.fit(X_train, y_train)
+        return model
+    
+    
+    def print_error(self):
+        # Load complete set of measures
+        measures = pd.read_pickle(
+            ROOT_DIR / 'data/processed'/'processed.pickle')['ETa']
+        measures = measures.drop(index=pd.date_range('2018-01-01','2019-01-01'))
+        fig, (ax1, ax2) = plt.subplots(2, figsize=(12, 10))
+        fig.suptitle("Relative Errors of predictions across folds")
+        ax_ref = ax2.twinx()
+        ax_interp = ax2.twiny()
+        g1 = sns.scatterplot(self.kt,
+                             x = 'Day', 
+                             y = 'Kt',
+                             hue = 'fold',
+                             ax = ax1)
+        g2 = sns.scatterplot(self.kt,
+                             x = 'Day', 
+                             y = 'Kt',
+                             hue = 'fold',
+                             ax = ax2)
+        measures.plot(ax=ax_ref, color='orange', zorder=0, alpha=0.3)
+        ax_ref.tick_params(axis='y', labelcolor='darkorange')
+        ax2.set_ylim(-1, 1)
+        ax2.set_title("Zoom in w/ respect to ETa scaled")
+        ax2.set_zorder(2)
+        ax2.set_facecolor('none')
+        x_interp = np.linspace(0, 1, 200)
+        y_interp = self.error_function(x_interp)
+        ax_interp.plot(x_interp, y_interp)
+        plt.tight_layout()
+        plt.show()
+        return None    
+    
+    def make_kt(self, kt: pd.Series, k: int):
+        # Remove outliers farther from 2 times the std
+        kt.loc[kt.abs() > 6*kt.std()] = np.nan
+        # Make it a DataFrame
+        kt = kt.to_frame(name='Kt')
+        # Add fold information
+        kt['fold'] = k + 1
+        self.kt = pd.concat([self.kt, kt])
+    
+    def test_model(self, model, k):
+        test = pd.read_pickle(ROOT_DIR/'data/processed'/f'test_fold_{k}.pickle')
+        X_test, y_test = test.loc[:, self.features], test.loc[:, 'ETa']
+        prediction_test = model.predict(X_test)
+        # Compute scores on scaled values
+        r2_scaled = r2_score(y_test, prediction_test)
+        rmse_scaled = mean_squared_error(y_test, prediction_test, squared=False)
+        # Rescale values
+        prediction_test = self.rescale_series(prediction_test)
+        measures_test = self.rescale_series(y_test.values, y_test.index).squeeze()
+        # Compute scores on rescaled values
+        r2 = r2_score(measures_test, prediction_test)
+        rmse = mean_squared_error(measures_test, prediction_test, squared=False)
+        kt = prediction_test / measures_test - 1
+        self.make_kt(kt, k)
+        logging.info(f'R2 score on test {k}: {r2_scaled:.2f} - {r2:.2f}'
+                     f'\nRMSE score on test: {rmse_scaled:.2f} - {rmse:.2f}')
+        scores = (r2, rmse)
+        return scores
+    
+    
+    def save_model(self):
+        dump(self.best_model, ROOT_DIR/'models'/f'{self.model_name}.joblib')
+        return None
+    
+    
+    def log_run(self, model, size, scores):
+        logging.info(model)
+        logging.info(f'Scores Mean: {scores.mean():.4f}')
+        logging.info(f'Score Variance: {scores.var():.4f}')
+        return None
+    
+    def log_model_scores(self):
+        scores = pd.DataFrame(self.scores, columns=['Test R2', 'Test RMSE'])
+        scores.to_csv(ROOT_DIR/ f'logs/ETa_{self.model_name}_k_scores.csv')
+        return None
+    
+    def rescale_series(self, eta, index=None): 
+        # Create fake DataFrame with fake features
+        X = pd.DataFrame(columns=self.features)
+        X['ETa'] = eta
+        scaler = load(ROOT_DIR/'models'/'scaler.joblib')
+        rescaled_eta = scaler.inverse_transform(X)[:, [-1]].ravel()
+        if index is not None:
+            # Create a DataFrame
+            rescaled_eta = pd.DataFrame(rescaled_eta, columns=['ETa'], index=index)
+        return rescaled_eta
+    
+    
 
 
 @click.group()
@@ -102,7 +205,7 @@ def rf(**kwargs):
     model_name = 'rf'
     for key, value in model.get_params().items():
         print(f'{key:25} : {value}')
-    main(model, model_name)
+    model = ModelTrainer(model, model_name)
 
 
 @click.command()
@@ -129,7 +232,7 @@ def mlp(**kwargs):
     model_name = 'mlp'
     for key, value in model.get_params().items():
         print(f'{key:25} : {value}')
-    main(model, model_name)
+    model = ModelTrainer(model, model_name)
     return None
 
 
@@ -151,7 +254,7 @@ def svr(**kwargs):
     model_name = 'mlp'
     for key, value in model.get_params().items():
         print(f'{key:25} : {value}')
-    main(model, model_name)  
+    model = ModelTrainer(model, model_name)  
     return None
 
 
@@ -164,7 +267,7 @@ def gpr(**kwargs):
     model_name = 'mlp'
     for key, value in model.get_params().items():
         print(f'{key:25} : {value}')
-    main(model, model_name)  
+    model = ModelTrainer(model, model_name)  
     return None
 
 
