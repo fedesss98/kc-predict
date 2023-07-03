@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="PYTHON_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/.spyproject" />
+      <excludeFolder url="file://$MODULE_DIR$/data/interim" />
+      <excludeFolder url="file://$MODULE_DIR$/data/processed" />
+      <excludeFolder url="file://$MODULE_DIR$/data/raw" />
+      <excludeFolder url="file://$MODULE_DIR$/logs" />
+      <excludeFolder url="file://$MODULE_DIR$/notebook" />
+      <excludeFolder url="file://$MODULE_DIR$/src/kcpredict/data/.spyproject" />
+      <excludeFolder url="file://$MODULE_DIR$/visualization/data" />
+      <excludeFolder url="file://$MODULE_DIR$/visualization/errors" />
+    </content>
+    <orderEntry type="jdk" jdkName="ml" jdkType="Python SDK" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+  <component name="PyDocumentationSettings">
+    <option name="format" value="PLAIN" />
+    <option name="myDocStringFormat" value="Plain" />
+  </component>
+</module>
