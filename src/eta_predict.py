@@ -51,12 +51,19 @@ m13 = ['Rs', 'U2', 'RHmin', 'RHmax', 'Tmin', 'Tmax', 'SWC', 'NDVI', 'NDWI', 'DOY
 
 
 FEATURES = {
-    'model 0': m0,
+    
     'model 1': m1,
     'model 2': m2,
+    'model 3': m3,
+    'model 4': m4,
+    'model 5': m5,
+    'model 6': m6,
     'model 7': m7,
+    'model 8': m8,
     'model 9': m9,
-    'model 10': m10,  
+    'model 10': m10, 
+    'model 11': m11,
+    'model 12': m12,
     }
 
 MODELS = {
@@ -148,7 +155,7 @@ def make_prediction(features_set, model_name, model_scores, kts):
             'model': MODELS[model_name],
             'model_name': model_name,
             'features': features,
-            'visualize_error': True,
+            'visualize_error': False,
         }
     
     trainer = ModelTrainer(**MODEL_PARAMETERS)
@@ -189,10 +196,13 @@ def reframe_kts(kts):
     kts = pd.DataFrame(kts, index=idx)
     return kts
 
-def make_violins(kts):
+def make_violins(kts, suptitle=None):
     models = kts.columns.get_level_values(0).unique()
     fig, axs = plt.subplots(len(models), figsize=(12, 6*len(models)))
-    fig.suptitle("Relative Error distribution across features sets", fontsize=18)
+    if suptitle is not None:
+        fig.suptitle("Relative Error distribution across features sets", fontsize=18)
+    else:
+        fig.suptitle(suptitle, fontsize=18)
     for i, m in enumerate(models):
         if len(models) > 1:
             ax = axs[i]
@@ -230,7 +240,8 @@ def main():
     axs = make_violins(kts)
     # Irrigation season starts at 15 May and ends 31 Sep
     irrigation_season_kt = kts.loc[(kts.index.dayofyear > 167) & (kts.index.month < 10)]
-    axs = make_violins(irrigation_season_kt)
+    violins_suptitle = 'Relative Error distribution across features sets (Irrigation Season)'
+    axs = make_violins(irrigation_season_kt, violins_suptitle)
     model_scores = prettify_scores(model_scores)
     # Save DataFrame
     model_scores.to_csv(ROOT_DIR / f'logs/eta_scores_{log_id}.csv', sep=';')

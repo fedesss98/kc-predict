@@ -88,8 +88,8 @@ class ModelTrainer:
         y_train = train.loc[:, 'ETa'].values.ravel()
         model.fit(X_train, y_train)
         return model
-    
-    
+
+
     def print_error(self):
         # Load complete set of measures
         measures = pd.read_pickle(
@@ -100,12 +100,12 @@ class ModelTrainer:
         ax_ref = ax2.twinx()
         ax_interp = ax2.twiny()
         g1 = sns.scatterplot(self.kt,
-                             x = 'Day', 
+                             x = 'Day',
                              y = 'Kt',
                              hue = 'fold',
                              ax = ax1)
         g2 = sns.scatterplot(self.kt,
-                             x = 'Day', 
+                             x = 'Day',
                              y = 'Kt',
                              hue = 'fold',
                              ax = ax2)
@@ -120,8 +120,8 @@ class ModelTrainer:
         ax_interp.plot(x_interp, y_interp)
         plt.tight_layout()
         plt.show()
-        return None    
-    
+        return None
+
     def make_kt(self, kt: pd.Series, k: int):
         # Remove outliers farther from 2 times the std
         kt.loc[kt.abs() > 6*kt.std()] = np.nan
@@ -130,7 +130,7 @@ class ModelTrainer:
         # Add fold information
         kt['fold'] = k + 1
         self.kt = pd.concat([self.kt, kt])
-    
+
     def test_model(self, model, k):
         test = pd.read_pickle(ROOT_DIR/'data/processed'/f'test_fold_{k}.pickle')
         X_test, y_test = test.loc[:, self.features], test.loc[:, 'ETa']
@@ -150,24 +150,24 @@ class ModelTrainer:
                      f'\nRMSE score on test: {rmse_scaled:.2f} - {rmse:.2f}')
         scores = (r2, rmse)
         return scores
-    
-    
+
+
     def save_model(self):
         dump(self.best_model, ROOT_DIR/'models'/f'{self.model_name}.joblib')
         return None
-    
-    
+
+
     def log_run(self, model, size, scores):
         logging.info(model)
         logging.info(f'Scores Mean: {scores.mean():.4f}')
         logging.info(f'Score Variance: {scores.var():.4f}')
         return None
-    
+
     def log_model_scores(self):
         scores = pd.DataFrame(self.scores, columns=['Test R2', 'Test RMSE'])
         scores.to_csv(ROOT_DIR/ f'logs/ETa_{self.model_name}_k_scores.csv')
         return None
-    
+
     def rescale_series(self, eta, index=None): 
         # Create fake DataFrame with fake features
         X = pd.DataFrame(columns=self.features)
@@ -178,8 +178,6 @@ class ModelTrainer:
             # Create a DataFrame
             rescaled_eta = pd.DataFrame(rescaled_eta, columns=['ETa'], index=index)
         return rescaled_eta
-    
-    
 
 
 @click.group()
