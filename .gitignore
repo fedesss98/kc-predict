@@ -4,10 +4,9 @@ desktop.ini
 # Folders
 data/
 logs/
-models/*.joblib
+models/
 visualization/**/
 docs/tokens.txt
-notebook/
 .neptune/
 
 # Byte-compiled / optimized / DLL files
