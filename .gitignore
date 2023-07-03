@@ -18,14 +18,14 @@ __pycache__/
 # C extensions
 *.so
 
-# # Distribution / packaging
+# Distribution / packaging
 # .Python
-# build/
+build/
 # develop-eggs/
 # dist/
 # downloads/
-# eggs/
-# .eggs/
+eggs/
+.eggs/
 # lib/
 # lib64/
 # parts/
@@ -34,9 +34,9 @@ __pycache__/
 # wheels/
 # pip-wheel-metadata/
 # share/python-wheels/
-# *.egg-info/
+*.egg-info/
 # .installed.cfg
-# *.egg
+*.egg
 # MANIFEST
 
 # PyInstaller
