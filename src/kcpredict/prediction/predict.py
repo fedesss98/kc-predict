@@ -57,7 +57,10 @@ def rescale_series(eta):
     rescaled_df = scaler.inverse_transform(df)
     df = pd.DataFrame(rescaled_df, columns=df.columns, index=df.index)
     eta['ETa'] = df['ETa'].to_frame()
-    eto = df['ETo'].to_frame()
+    try:
+        eto = df['ETo'].to_frame()
+    except KeyError:
+        eto = None
     return eta, eto
 
 
@@ -98,7 +101,7 @@ def compute_kc(eta):
     return kc
 
 
-def main(model, output=None, features=None, visualize=True, eta_output=None):
+def main(model, output=None, features=None, visualize=True, scaled=True, eta_output=None):
     logging.info(f"\n{'-'*7} PREDICT ETa {'-'*7}\n\n")
     # Features to predict ETa
     X = pd.read_pickle(
@@ -121,11 +124,19 @@ def main(model, output=None, features=None, visualize=True, eta_output=None):
     # Make ETa DataFrame with measures and predictions
     eta = fill_eta(eta)
     if visualize:
-        plot_prediction(eta, 'ETa', 'Measured and Predicted ETa (scaled)')
+        if scaled:
+            plot_prediction(eta, 'ETa', 'Measured and Predicted ETa (scaled)')
+        else:
+            eta_rescaled, _ = rescale_series(eta)
+            plot_prediction(eta_rescaled, 'ETa', 'Measured and Predicted ETa')
         plot_linear(model, measures, features)
     if eta_output is not None:
         # Save ETa
-        pd.to_pickle(eta, eta_output)
+        if scaled:
+            pd.to_pickle(eta, eta_output)
+        else:
+            eta_rescaled, _ = rescale_series(eta)
+            pd.to_pickle(eta_rescaled, eta_output)
         logging.info(f'Predictions saved in:\n{eta_output}')
     elif output is not None:
         # Compute Kc as ETa / ETo        

@@ -59,7 +59,6 @@ class ModelTrainer:
         # if log:
         #     log_run(model, np.array(scores), **kwargs)
         logging.info(f'\n\n{"/"*30}\n')
-        return None
 
     @staticmethod
     def error_function(x):
