@@ -29,8 +29,7 @@ def ask_for_model():
 def load_model(model_name):
     if model_name is None:        
         model_name = ask_for_model()
-    model = load(ROOT_DIR/'models'/f'{model_name}')
-    return model
+    return load(ROOT_DIR/'models'/f'{model_name}')
 
 
 def main(model, visualize):

@@ -34,8 +34,7 @@ K = 10
 
 
 def get_data(fname):
-    df = pd.read_pickle(fname)
-    return df
+    return pd.read_pickle(fname)
 
 
 
@@ -56,9 +55,7 @@ def make_dataframe(data):
     """Selects only relevant features (Model #1 in previous experiments)"""
     features = get_features(data)
     target = get_target(data)
-    # Concatenate features and target data
-    df = pd.concat([features, target], axis=1)
-    return df
+    return pd.concat([features, target], axis=1)
 
 
 def impute_features(df):
@@ -71,10 +68,7 @@ def impute_features(df):
     eta_values = df['ETa'].values.reshape(-1, 1)
     # and merge it with imputed feature values
     imputed_values = np.append(imputed_values, eta_values, axis=1)
-    # Make DataFrame
-    imputed_data = pd.DataFrame(imputed_values, 
-                                columns=df.columns, index=df.index)
-    return imputed_data
+    return pd.DataFrame(imputed_values, columns=df.columns, index=df.index)
 
 
 def split_folds(df):
@@ -98,9 +92,7 @@ def scale_data(df, scaler):
     elif scaler == 'MinMax':
         scaler = MinMaxScaler(feature_range=(-1,1))
     scaled_values = scaler.fit_transform(df)
-    scaled_data = pd.DataFrame(scaled_values, 
-                               columns=df.columns, index=df.index)
-    return scaled_data
+    return pd.DataFrame(scaled_values, columns=df.columns, index=df.index)
 
 
 # def write_log(input_file, scaler, output_file, visualize, df, train, test):

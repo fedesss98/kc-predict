@@ -20,23 +20,28 @@ ROOT = Path(__file__).parent.parent.parent.parent
 
 
 def get_trapezoidal():
-    df = pd.read_csv(ROOT / 'data/external' / 'trapezoidal_kc.csv',
-                     sep=';', decimal=',',
-                     index_col=0,
-                     parse_dates=True, 
-                     infer_datetime_format=True, dayfirst=True,
-                     skiprows=[0])
-    return df
+    return pd.read_csv(
+        ROOT / 'data/external' / 'trapezoidal_kc.csv',
+        sep=';',
+        decimal=',',
+        index_col=0,
+        parse_dates=True,
+        infer_datetime_format=True,
+        dayfirst=True,
+        skiprows=[0],
+    )
 
 
 def get_vi_model():
-    df = pd.read_csv(ROOT / 'data/external/VIs_Kc_2018_2022.csv',
-                     sep=';', decimal=',',
-                     index_col=0,
-                     parse_dates=True, 
-                     infer_datetime_format=True, dayfirst=True,
-                     )
-    return df
+    return pd.read_csv(
+        ROOT / 'data/external/VIs_Kc_2018_2022.csv',
+        sep=';',
+        decimal=',',
+        index_col=0,
+        parse_dates=True,
+        infer_datetime_format=True,
+        dayfirst=True,
+    )
 
 def plot_models(df):
     fig, ax = plt.subplots(figsize=(10, 4))

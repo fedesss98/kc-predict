@@ -37,16 +37,14 @@ def get_target(df):
 
 
 def get_data():
-    df = pd.read_pickle(ROOT_DIR/'data/processed'/'processed.pickle')
-    return df
+    return pd.read_pickle(ROOT_DIR/'data/processed'/'processed.pickle')
 
 
 def make_sets(df):
     df = df.dropna()
     X = get_features(df)
     y = get_target(df)
-    train_test_sets = train_test_split(X, y, test_size=0.2, random_state=1)
-    return train_test_sets
+    return train_test_split(X, y, test_size=0.2, random_state=1)
 
 
 def setup_model(model, size):
@@ -95,7 +93,7 @@ def main(model, size, log):
     model = setup_model(model, size)
     # Find folds data
     k = len(list(ROOT_DIR.glob('data/processed/test_fold_*')))
-    scores = list()
+    scores = []
     for fold in range(k):
         model = train_model(model, fold)
         test_score = test_model(model, fold)
@@ -103,7 +101,7 @@ def main(model, size, log):
     save_model(model)
     if log:
         log_run(model, size, np.array(scores))
-    
+
     print(f'\n\n{"-"*30}\n\n')
 
 @click.command()
