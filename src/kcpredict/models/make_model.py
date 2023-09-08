@@ -44,7 +44,7 @@ class ModelTrainer:
         models = dict()
         self.scores = np.zeros((k, 2))
         for fold in range(k):
-            trained_model= self.train_model(self.model, fold)
+            trained_model = self.train_model(self.model, fold)
             models[fold] = trained_model
             self.scores[fold] = self.test_model(trained_model, fold)
         if visualize_error:
@@ -93,7 +93,7 @@ class ModelTrainer:
         # Load complete set of measures
         measures = pd.read_pickle(
             ROOT_DIR / 'data/processed'/'processed.pickle')['ETa']
-        measures = measures.drop(index=pd.date_range('2018-01-01','2019-01-01'))
+        measures = measures.drop(index=pd.date_range('2018-01-01', '2019-01-01'))
         fig, (ax1, ax2) = plt.subplots(2, figsize=(12, 10))
         fig.suptitle("Relative Errors of predictions across folds")
         ax_ref = ax2.twinx()

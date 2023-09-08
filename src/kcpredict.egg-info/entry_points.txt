@@ -1,3 +1,0 @@
-[console_scripts]
-kc-pipeline = kcpredict.pipeline:cli
-kc-predict = kcpredict.cli:cli

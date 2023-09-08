@@ -51,27 +51,27 @@ m13 = ['Rs', 'U2', 'RHmin', 'RHmax', 'Tmin', 'Tmax', 'SWC', 'NDVI', 'NDWI', 'DOY
 
 
 FEATURES = {
-    'model 1': m1,
-    'model 2': m2,
-    'model 3': m3,
-    'model 4': m4,
+    # 'model 1': m1,
+    # 'model 2': m2,
+    # 'model 3': m3,
+    # 'model 4': m4,
     'model 5': m5,
-    'model 6': m6,
-    'model 7': m7,
-    'model 8': m8,
-    'model 9': m9,
-    'model 10': m10,
-    'model 11': m11,
-    'model 12': m12,
+    # 'model 6': m6,
+    # 'model 7': m7,
+    # 'model 8': m8,
+    # 'model 9': m9,
+    # 'model 10': m10,
+    # 'model 11': m11,
+    # 'model 12': m12,
     }
 
 MODELS = {
-    'rf': RandomForestRegressor(
-            n_estimators=1000,
-            max_depth=None,
-            random_state= 135, # 12,
-            ccp_alpha=0.0,        
-        ),
+    # 'rf': RandomForestRegressor(
+    #         n_estimators=1000,
+    #         max_depth=None,
+    #         random_state=43798,  # 12,
+    #         ccp_alpha=0.0,
+    #     ),
     'mlp': MLPRegressor(
             hidden_layer_sizes=(100, 100, 100),
             max_iter=1000,
@@ -82,6 +82,7 @@ MODELS = {
     #     weights='distance',        
     #     ),
     }
+
 
 MAKE_DATA_PARAMETERS = {
     'input_file': (ROOT_DIR / 'data/raw/db_villabate_deficit_9_2018_2021_irr.csv'),    
@@ -94,7 +95,7 @@ PREPROCESS_PARAMETERS = {
     'features': None,
     'scaler': 'MinMax',
     'folds': 4,
-    'k_seed': 24,  # 24
+    'k_seed': 32316,  # 24
     'output_file': ROOT_DIR / 'data/processed/processed.pickle',
     'visualize': False,
     }
@@ -122,7 +123,7 @@ def setup_logging():
     # Create a logging ID
     random_digits = str(random.randint(0, 99999)).zfill(5)
     random_character = random.choice(string.ascii_uppercase)
-    log_id =  random_digits +random_character
+    log_id = random_digits + random_character
     logging.info(f'__________________________________\n{str(datetime.datetime.now())}')
     logging.info(f"\nStarting run ID {log_id}")
     return log_id

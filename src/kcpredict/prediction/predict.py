@@ -49,6 +49,19 @@ def fill_eta(eta):
     return total_eta
 
 
+def rescale_eta(eta, index=None):
+    # Create fake DataFrame with fake features
+    df = pd.read_pickle(ROOT_DIR / 'data/processed' / 'processed.pickle')
+    df['ETa'] = eta['ETa']
+    scaler = joblib.load(ROOT_DIR / 'models' / 'scaler.joblib')
+    rescaled_eta = scaler.inverse_transform(df)[:, [-1]].ravel()
+    if index is not None:
+        # Create a DataFrame
+        rescaled_eta = pd.DataFrame(rescaled_eta, columns=['ETa'], index=index)
+        rescaled_eta['Source'] = eta['Source']
+    return rescaled_eta
+
+
 def rescale_series(eta): 
     # Reset original DataFrame with feature measures and predicted target
     df = pd.read_pickle(ROOT_DIR/'data/processed'/'processed.pickle')
@@ -123,11 +136,12 @@ def main(model, output=None, features=None, visualize=True, scaled=True, eta_out
         logging.error("Error finding the model. Remember to include file extension.")
     # Make ETa DataFrame with measures and predictions
     eta = fill_eta(eta)
+    eta_rescaled = pd.DataFrame(columns=['ETa', 'Source'])
     if visualize:
         if scaled:
             plot_prediction(eta, 'ETa', 'Measured and Predicted ETa (scaled)')
         else:
-            eta_rescaled, _ = rescale_series(eta)
+            eta_rescaled = rescale_eta(eta, index=eta.index)
             plot_prediction(eta_rescaled, 'ETa', 'Measured and Predicted ETa')
         plot_linear(model, measures, features)
     if eta_output is not None:
@@ -135,7 +149,6 @@ def main(model, output=None, features=None, visualize=True, scaled=True, eta_out
         if scaled:
             pd.to_pickle(eta, eta_output)
         else:
-            eta_rescaled, _ = rescale_series(eta)
             pd.to_pickle(eta_rescaled, eta_output)
         logging.info(f'Predictions saved in:\n{eta_output}')
     elif output is not None:
