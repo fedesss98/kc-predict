@@ -23,7 +23,7 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 import seaborn as sns
 
 from pathlib import Path
-ROOT_DIR = Path(__file__).parent.parent.parent.parent
+ROOT_DIR = Path(__file__).parent.parent.parent
 
 
 def remove_outliers(df, detector):
@@ -47,8 +47,7 @@ def remove_noise(df):
 
 def swc_filter(df):
     swc = pd.read_pickle(ROOT_DIR/'data/interim'/'data.pickle')['SWC']
-    df_filtered = df.loc[swc>0.21]
-    return df_filtered
+    return df.loc[swc>0.21]
 
 
 def rolling_analysis(df):
@@ -58,13 +57,16 @@ def rolling_analysis(df):
 
 
 def get_trapezoidal():
-    df = pd.read_csv(ROOT_DIR/'data/external'/'trapezoidal_kc.csv',
-                     sep=';', decimal=',',
-                     index_col=0,
-                     parse_dates=True, 
-                     infer_datetime_format=True, dayfirst=True,
-                     skiprows=[0])
-    return df
+    return pd.read_csv(
+        ROOT_DIR / 'data/external' / 'trapezoidal_kc.csv',
+        sep=';',
+        decimal=',',
+        index_col=0,
+        parse_dates=True,
+        infer_datetime_format=True,
+        dayfirst=True,
+        skiprows=[0],
+    )
 
 
 def save_data(df, filename):
@@ -202,12 +204,8 @@ def main(outfile, visualize, contamination=0.01, seed=352):
     
     print(f'\n\n{"-"*21}')
     
-    return None    
+    return None
 
-@click.command()
-@click.option('-v', '--visualize', is_flag=True)
-def polish_kc(visualize):
-    main(visualize)
 
 if __name__ == "__main__":
     main(visualize=False, contamination=0.0015)

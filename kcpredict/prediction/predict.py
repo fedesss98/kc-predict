@@ -8,7 +8,6 @@ Predict ETa with saved model.
 From measured and predicted ETa computes KC dividing by measured ET0.
 
 """
-import click
 import matplotlib.pyplot as plt
 import pandas as pd
 import joblib  # To load model and scaler
@@ -17,7 +16,7 @@ import seaborn as sns
 import logging
 
 from pathlib import Path
-ROOT_DIR = Path(__file__).parent.parent.parent.parent
+ROOT_DIR = Path(__file__).parent.parent.parent
 
 
 def ask_for_model():
@@ -32,8 +31,7 @@ def ask_for_model():
 def load_model(model_name):
     if model_name is None:        
         model_name = ask_for_model()
-    model = joblib.load(ROOT_DIR/'models'/f'{model_name}')
-    return model
+    return joblib.load(ROOT_DIR/'models'/f'{model_name}')
 
 
 def fill_eta(eta):
@@ -163,22 +161,10 @@ def main(model, output=None, features=None, visualize=True, scaled=True, eta_out
     return None
 
 
-@click.command()
-@click.option('-m', '--model', prompt="Which model do you want to use?", 
-                help="Name of saved model")
-@click.option('-out', '--output-file', 
-              type=click.Path(),
-              default=(ROOT_DIR/'data/predicted'/'predicted.pickle'),)
-@click.option('-v', '--visualize', is_flag=True)
-def predict(model, output_file, visualize):
-    """
-    Predict ETa with given model.
-    From measured and predicted ETa computes KC dividing by measured ET0.
-    """
-    main(model, output_file, visualize)
+
 
 if __name__ == "__main__":
-    predict()
+    main()
 
 
 
