@@ -60,6 +60,23 @@ def rescale_eta(eta, index=None):
     return rescaled_eta
 
 
+def find_eto():
+    from pathlib import Path
+    raw_data_path = ROOT_DIR/'data/raw'
+    if (raw_data_path/'data.pickle').exists():
+        eto = pd.read_pickle(raw_data_path / 'data.pickle')['ETo']
+    elif (raw_data_path/'data.csv').exists():
+        eto = pd.read_csv(raw_data_path/'data.csv', sep=';', decimal='.')['ETo']
+    elif (raw_data_path/'data.xlsx').exists():
+        eto = pd.read_excel(raw_data_path/'data.xlsx')['ETo']
+    else:
+        eto_path = Path(input("Please input the position of ETo CSV file: "))
+        eto = pd.read_csv(eto_path, sep=';', decimal='.')['ETo']
+    eto = eto.to_frame(name='ETo')
+    return eto
+
+
+
 def rescale_series(eta): 
     # Reset original DataFrame with feature measures and predicted target
     df = pd.read_pickle(ROOT_DIR/'data/processed'/'processed.pickle')
@@ -71,7 +88,7 @@ def rescale_series(eta):
     try:
         eto = df['ETo'].to_frame()
     except KeyError:
-        eto = None
+        eto = find_eto()
     return eta, eto
 
 
@@ -119,6 +136,8 @@ def main(model, output=None, features=None, visualize=True, scaled=True, eta_out
         ROOT_DIR/'data/processed'/'predict.pickle')
     if features is not None:
         X = X.loc[:, features]
+    else:
+        features = X.columns.tolist()
     measures = pd.read_pickle(
         ROOT_DIR/'data/processed'/'processed.pickle').dropna()
     # Predict ETa

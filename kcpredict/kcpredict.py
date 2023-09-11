@@ -68,7 +68,7 @@ PREPROCESS_PARAMETERS = {
     'folds': 5,
     'k_seed': 24,  # 24
     'output_file': ROOT_DIR/'data/processed/processed.pickle',
-    'visualize': True,
+    'visualize': False,
     }
 
 MODELS = {
@@ -119,6 +119,7 @@ def main(features_set, model_name, **kwargs):
         }
     trainer = ModelTrainer(**MODEL_PARAMETERS)
 
+    PREDICTION_PARAMETERS['features'] = features
     predict(model=f'{model_name_to_save}.joblib', **PREDICTION_PARAMETERS)
 
     polish(**POSTPROCESS_PARAMETERS)
