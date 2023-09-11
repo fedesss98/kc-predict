@@ -132,7 +132,6 @@ POSTPROCESS_PARAMETERS = {
     "contamination": 0.01,
     "seed": 352,
     "visualize": True,
-    "outfile": "kc_postprocessed",
 }
 
 
@@ -153,6 +152,7 @@ def main(features_set, model_name, **kwargs):
     }
     trainer = ModelTrainer(**MODEL_PARAMETERS)
 
+    PREDICTION_PARAMETERS["outfile"] = f"{model_name_to_save}_kc_postprocessed"
     PREDICTION_PARAMETERS["features"] = features
     predict(model=f"{model_name_to_save}.joblib", **PREDICTION_PARAMETERS)
 
