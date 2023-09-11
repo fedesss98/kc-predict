@@ -2,9 +2,9 @@
 desktop.ini
 
 # Folders
-data/
+/data/
 logs/
-models/
+/models/
 visualization/**/
 docs/tokens.txt
 .neptune/
