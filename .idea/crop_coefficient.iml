@@ -10,7 +10,6 @@
       <excludeFolder url="file://$MODULE_DIR$/data/raw" />
       <excludeFolder url="file://$MODULE_DIR$/logs" />
       <excludeFolder url="file://$MODULE_DIR$/models" />
-      <excludeFolder url="file://$MODULE_DIR$/notebook" />
       <excludeFolder url="file://$MODULE_DIR$/src/kcpredict/data/.spyproject" />
       <excludeFolder url="file://$MODULE_DIR$/visualization/data" />
       <excludeFolder url="file://$MODULE_DIR$/visualization/errors" />

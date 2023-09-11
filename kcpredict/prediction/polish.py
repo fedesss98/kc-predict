@@ -91,7 +91,6 @@ def make_trapezoidal(df):
     Initial Season: 1Gen - 31Mar
     """
     # First create seasonal groups based on month
-    df["season"] = np.nan
     seasons = [
         ("2018-01-01", "2018-03-31"),
         ("2018-05-01", "2018-08-31"),
@@ -105,20 +104,17 @@ def make_trapezoidal(df):
         ("2022-05-01", "2022-08-31"),
         ("2022-10-01", "2023-05-31"),
     ]
+
+    df["season"] = -1
     for i, season in enumerate(seasons):
-        for d in df.index:
-            if d in pd.date_range(season[0], season[1]):
-                df.loc[d, "season"] = i
+        df.loc[pd.date_range(season[0], season[1]), "season"] = i
+
     trapezoidal = df.groupby("season").mean(numeric_only=True)
     std = df.groupby("season").std(numeric_only=True)
-    # Now assign mean values to all data in season
-    df["trapezoidal"] = np.nan
-    df["std"] = np.nan
-    for i, season in enumerate(seasons):
-        for d in df.index:
-            if d in pd.date_range(season[0], season[1]):
-                df.loc[d, "trapezoidal"] = trapezoidal.iloc[i].ravel()
-                df.loc[d, "std"] = std.iloc[i].ravel()
+
+    df["trapezoidal"] = df["season"].map(trapezoidal.to_dict())
+    df["std"] = df["season"].map(std.to_dict())
+
     trpz = df.loc[:, ["trapezoidal", "std"]]
     trpz.to_pickle(ROOT_DIR / "data/predicted" / "trapezoidal.pickle")
     trpz.to_csv(ROOT_DIR / "data/predicted" / "trapezoidal.csv")
