@@ -39,6 +39,7 @@ m10 = ['ETo', 'NDVI', 'NDWI', 'DOY']
 m11 = ['Rs', 'SWC', 'NDVI', 'NDWI', 'DOY']
 m12 = ['Rs', 'NDVI', 'NDWI', 'DOY']
 m13 = ['Rs', 'U2', 'RHmin', 'RHmax', 'Tmin', 'Tmax', 'SWC', 'NDVI', 'NDWI', 'DOY', 'I', 'P']
+m14 = ['Rs', 'U2', 'RHmin', 'RHmax', 'Tmin', 'Tmax', 'DOY']
 
 
 FEATURES = {
@@ -53,7 +54,8 @@ FEATURES = {
     'model 9': m9,
     'model 10': m10,
     'model 11': m11,
-    'model 12': m12, 
+    'model 12': m12,
+    'Final model': m14,
     }
 
 MAKE_DATA_PARAMETERS = {
@@ -98,7 +100,7 @@ POSTPROCESS_PARAMETERS = {
     'contamination': 0.01,
     'seed': 352,
     'visualize': True,
-    'output_name': 'kc_postprocessed',
+    'outfile': 'kc_postprocessed',
     }
 
 # %% MAIN
@@ -124,12 +126,12 @@ def main(features_set, model_name, **kwargs):
 
     polish(**POSTPROCESS_PARAMETERS)
 
-    calc_metrics(POSTPROCESS_PARAMETERS['output_name'])
+    calc_metrics(POSTPROCESS_PARAMETERS['outfile'])
         
 
 # %% Entry point
 if __name__ == "__main__":
-    features_set = 'model 7'
+    features_set = 'Final model'
     model_name = 'rf'
     main(features_set, model_name)
 
