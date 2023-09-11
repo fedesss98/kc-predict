@@ -61,7 +61,6 @@ def rescale_eta(eta, index=None):
 
 
 def find_eto():
-    from pathlib import Path
     raw_data_path = ROOT_DIR/'data/raw'
     if (raw_data_path/'data.pickle').exists():
         eto = pd.read_pickle(raw_data_path / 'data.pickle')['ETo']
@@ -76,6 +75,20 @@ def find_eto():
     return eto
 
 
+def make_eto(eta_index):
+    from pathlib import Path
+    # explicitly require this experimental feature
+    from sklearn.experimental import enable_iterative_imputer  # noqa
+    # now you can import normally from sklearn.impute
+    from sklearn.impute import IterativeImputer
+
+    eto = find_eto()
+    eto.index = eta_index
+    # Impute missing features
+    imputer = IterativeImputer(random_state=0)
+    eto['ETo'] = imputer.fit_transform(eto)
+    return eto
+
 
 def rescale_series(eta): 
     # Reset original DataFrame with feature measures and predicted target
@@ -88,7 +101,7 @@ def rescale_series(eta):
     try:
         eto = df['ETo'].to_frame()
     except KeyError:
-        eto = find_eto()
+        eto = make_eto(eta.index)
     return eta, eto
 
 
