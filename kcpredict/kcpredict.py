@@ -98,6 +98,7 @@ POSTPROCESS_PARAMETERS = {
     'contamination': 0.01,
     'seed': 352,
     'visualize': True,
+    'output_name': 'kc_postprocessed',
     }
 
 # %% MAIN
@@ -120,10 +121,9 @@ def main(features_set, model_name, **kwargs):
 
     predict(model=f'{model_name_to_save}.joblib', **PREDICTION_PARAMETERS)
 
-    output_name = 'kc_postprocessed'
-    polish(outfile=output_name, **POSTPROCESS_PARAMETERS)
+    polish(**POSTPROCESS_PARAMETERS)
 
-    calc_metrics(output_name)
+    calc_metrics(POSTPROCESS_PARAMETERS['output_name'])
         
 
 # %% Entry point
