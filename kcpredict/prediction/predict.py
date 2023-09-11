@@ -67,13 +67,15 @@ def find_eto():
     if (raw_data_path / "data.pickle").exists():
         eto = pd.read_pickle(raw_data_path / "data.pickle")["ETo"]
     elif (raw_data_path / "data.csv").exists():
-        eto = pd.read_csv(raw_data_path / "data.csv", sep=";", decimal=".")["ETo"]
+        eto = pd.read_csv(raw_data_path / "data.csv", sep=";", decimal=",", usecols=["ETo"])
     elif (raw_data_path / "data.xlsx").exists():
-        eto = pd.read_excel(raw_data_path / "data.xlsx")["ETo"]
+        eto = pd.read_excel(raw_data_path / "data.xlsx", usecols=["ETo"])
     else:
         eto_path = Path(input("Please input the position of ETo CSV file: "))
-        eto = pd.read_csv(eto_path, sep=";", decimal=".")["ETo"]
-    eto = eto.to_frame(name="ETo")
+        eto = pd.read_csv(eto_path, sep=";", decimal=".", usecols=["ETo"])
+    if isinstance(eto, pd.Series):
+        # Convert it to dataframe
+        eto = eto.to_frame(name="ETo")
     return eto
 
 
