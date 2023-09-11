@@ -6,6 +6,8 @@ Created on Mon Oct 17 10:51:27 2022
 
 All the pipeline to predict Kc
 """
+import pandas as pd
+
 from data.make_data import main as make_data
 from data.preprocess import main as preprocess_data
 from models.make_model import ModelTrainer
@@ -112,57 +114,62 @@ MODELS = {
         random_state=12,
         ccp_alpha=0.0,
     ),
-    # 'mlp': MLPRegressor(
-    #     hidden_layer_sizes=(100, 100, 100),
-    #     max_iter=1000,
-    #     random_state=32652,  # 32652
-    # ),
-    # 'knn': KNeighborsRegressor(
-    #     n_neighbors=5,
-    #     weights='distance',
-    #     ),
+    'mlp': MLPRegressor(
+        hidden_layer_sizes=(100, 100, 100),
+        max_iter=1000,
+        random_state=32652,  # 32652
+    ),
+    'knn': KNeighborsRegressor(
+        n_neighbors=5,
+        weights='distance',
+        ),
 }
 
 PREDICTION_PARAMETERS = {
     "output": ROOT_DIR / "data/predicted" / "predicted.pickle",
-    "visualize": True,
+    "visualize": False,
 }
 
 POSTPROCESS_PARAMETERS = {
     "contamination": 0.01,
     "seed": 352,
-    "visualize": True,
+    "visualize": False,
 }
 
 
 # %% MAIN
-def main(features_set, model_name, **kwargs):
+def main(features_set, **kwargs):
     make_data(**MAKE_DATA_PARAMETERS)
 
     features = FEATURES[features_set]
     PREPROCESS_PARAMETERS["features"] = features
     preprocess_data(**PREPROCESS_PARAMETERS)
 
-    model_name_to_save = f"{model_name.upper()}_" + features_set.strip("model ")
-    MODEL_PARAMETERS = {
-        "model": MODELS[model_name],
-        "model_name": model_name_to_save,
-        "features": features,
-        "visualize_error": False,
-    }
-    trainer = ModelTrainer(**MODEL_PARAMETERS)
+    predictions = {}
 
-    PREDICTION_PARAMETERS["outfile"] = f"{model_name_to_save}_kc_postprocessed"
-    PREDICTION_PARAMETERS["features"] = features
-    predict(model=f"{model_name_to_save}.joblib", **PREDICTION_PARAMETERS)
+    for model_name in MODELS.keys():
+        model_name_to_save = f"{model_name.upper()}"
+        MODEL_PARAMETERS = {
+            "model": MODELS[model_name],
+            "model_name": model_name_to_save,
+            "features": features,
+            "visualize_error": False,
+        }
+        trainer = ModelTrainer(**MODEL_PARAMETERS)
 
-    polish(**POSTPROCESS_PARAMETERS)
+        PREDICTION_PARAMETERS["features"] = features
+        predict(model=f"{model_name_to_save}.joblib", **PREDICTION_PARAMETERS)
 
-    calc_metrics(POSTPROCESS_PARAMETERS["outfile"])
+        POSTPROCESS_PARAMETERS["outfile"] = f"{model_name_to_save}_kc_postprocessed"
+        kc_postprocessed = polish(**POSTPROCESS_PARAMETERS)
+
+        predictions[model_name.upper()] = kc_postprocessed
+
+    kc_postprocessed = pd.concat(predictions, axis=1)
+    calc_metrics(kc_postprocessed)
 
 
 # %% Entry point
 if __name__ == "__main__":
     features_set = "Final model"
-    model_name = "rf"
-    main(features_set, model_name)
+    main(features_set)
