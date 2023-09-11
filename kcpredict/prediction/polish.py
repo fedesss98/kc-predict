@@ -103,8 +103,8 @@ def make_trapezoidal(df):
         for d in df.index:
             if d in pd.date_range(season[0], season[1]):
                 df.loc[d, 'season'] = i
-    trapezoidal = df.groupby('season').mean()
-    std = df.groupby('season').std()
+    trapezoidal = df.groupby('season').mean(numeric_only=True)
+    std = df.groupby('season').std(numeric_only=True)
     # Now assign mean values to all data in season
     df['trapezoidal'] = np.nan
     df['std'] = np.nan
