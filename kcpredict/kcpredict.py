@@ -46,13 +46,13 @@ FEATURES = {
     'model 2': m2,
     'model 3': m3,
     'model 4': m4, 
-    # 'model 5': m5, 
-    # 'model 6': m6, 
-    # 'model 7': m7,
+    'model 5': m5,
+    'model 6': m6,
+    'model 7': m7,
     'model 8': m8, 
     'model 9': m9,
-    # 'model 10': m10,  
-    # 'model 11': m11, 
+    'model 10': m10,
+    'model 11': m11,
     'model 12': m12, 
     }
 
@@ -128,7 +128,7 @@ def main(features_set, model_name, **kwargs):
 
 # %% Entry point
 if __name__ == "__main__":
-    features_set = 'model 1'
+    features_set = 'model 7'
     model_name = 'rf'
     main(features_set, model_name)
 

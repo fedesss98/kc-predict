@@ -14,7 +14,10 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from .predict import plot_prediction
+try:
+    from predict import plot_prediction
+except ModuleNotFoundError:
+    from .predict import plot_prediction
 
 from sklearn.ensemble import IsolationForest
 
@@ -208,4 +211,5 @@ def main(outfile, visualize, contamination=0.01, seed=352):
 
 
 if __name__ == "__main__":
-    main(visualize=False, contamination=0.0015)
+    output_name = 'kc_postprocessed'
+    main(visualize=True, contamination=0.0026, outfile=output_name)
