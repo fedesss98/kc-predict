@@ -67,7 +67,9 @@ def find_eto():
     if (raw_data_path / "data.pickle").exists():
         eto = pd.read_pickle(raw_data_path / "data.pickle")["ETo"]
     elif (raw_data_path / "data.csv").exists():
-        eto = pd.read_csv(raw_data_path / "data.csv", sep=";", decimal=",", usecols=["ETo"])
+        eto = pd.read_csv(
+            raw_data_path / "data.csv", sep=";", decimal=",", usecols=["ETo"]
+        )
     elif (raw_data_path / "data.xlsx").exists():
         eto = pd.read_excel(raw_data_path / "data.xlsx", usecols=["ETo"])
     else:
@@ -194,7 +196,7 @@ def main(
         pd.to_pickle(kc, output)
         logging.info(f"Predictions saved in:\n{output}")
     logging.info(f'\n\n{"/"*30}\n\n')
-    return None
+    return kc if output is not None else None
 
 
 if __name__ == "__main__":

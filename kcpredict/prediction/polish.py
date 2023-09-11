@@ -230,7 +230,7 @@ def main(outfile, visualize, contamination=0.01, seed=352):
 
     print(f'\n\n{"-"*21}')
 
-    return None
+    return kc_filtered
 
 
 if __name__ == "__main__":
