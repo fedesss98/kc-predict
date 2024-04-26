@@ -7,6 +7,8 @@ Created on Mon Oct 17 10:51:27 2022
 All the pipeline to predict Kc
 """
 import pandas as pd
+import logging
+
 
 from data.make_data import main as make_data
 from data.preprocess import main as preprocess_data
@@ -25,77 +27,81 @@ from pathlib import Path
 
 ROOT_DIR = Path(__file__).parent.parent
 
+# %% FEATURES
+# m0 = [
+#     "ETo",
+#     "U2",
+#     "RHmin",
+#     "RHmax",
+#     "Tmin",
+#     "Tmax",
+#     "SWC",
+#     "NDVI",
+#     "NDWI",
+#     "DOY",
+#     "I",
+#     "P",
+#     "EToC",
+#     "IC",
+#     "PC",
+#     "LID",
+#     "LPD",
+#     "LWD",
+# ]
+# m1 = ["Rs", "U2", "RHmin", "RHmax", "Tmin", "Tmax", "SWC", "NDVI", "NDWI", "DOY"]
+# m2 = ["Rs", "U2", "RHmax", "Tmin", "Tmax", "SWC", "NDVI", "NDWI", "DOY"]
+# m3 = ["Rs", "U2", "RHmax", "Tmax", "SWC", "NDVI", "NDWI", "DOY"]
+# m4 = ["Rs", "U2", "RHmax", "Tmax", "SWC", "NDWI", "DOY"]
+# m5 = ["Rs", "U2", "Tmax", "SWC", "NDWI", "DOY"]
+# m6 = ["Rs", "U2", "Tmax", "SWC", "DOY"]
+# m7 = ["Rs", "Tmax", "SWC", "DOY"]
+# m8 = ["Rs", "U2", "RHmin", "RHmax", "Tmin", "Tmax"]
+# m9 = ["ETo", "SWC", "NDVI", "NDWI", "DOY"]
+# m10 = ["ETo", "NDVI", "NDWI", "DOY"]
+# m11 = ["Rs", "SWC", "NDVI", "NDWI", "DOY"]
+# m12 = ["Rs", "NDVI", "NDWI", "DOY"]
+# m13 = [
+#     "Rs",
+#     "U2",
+#     "RHmin",
+#     "RHmax",
+#     "Tmin",
+#     "Tmax",
+#     "SWC",
+#     "NDVI",
+#     "NDWI",
+#     "DOY",
+#     "I",
+#     "P",
+# ]
+# m14 = ["Rs", "U2", "RHmin", "RHmax", "Tmin", "Tmax", "DOY"]
+
+
+# FEATURES = {
+#     "model 1": m1,
+#     "model 2": m2,
+#     "model 3": m3,
+#     "model 4": m4,
+#     "model 5": m5,
+#     "model 6": m6,
+#     "model 7": m7,
+#     "model 8": m8,
+#     "model 9": m9,
+#     "model 10": m10,
+#     "model 11": m11,
+#     "model 12": m12,
+#     "Final model": m14,
+# }
+
+
+FEATURES = {"2024_variouscrop": ["Tmin", "Tmax", "Tdew", "Uwind", "Vwind", "Rs", "ETo"]}
+
 # %% PARAMETERS
 
-m0 = [
-    "ETo",
-    "U2",
-    "RHmin",
-    "RHmax",
-    "Tmin",
-    "Tmax",
-    "SWC",
-    "NDVI",
-    "NDWI",
-    "DOY",
-    "I",
-    "P",
-    "EToC",
-    "IC",
-    "PC",
-    "LID",
-    "LPD",
-    "LWD",
-]
-m1 = ["Rs", "U2", "RHmin", "RHmax", "Tmin", "Tmax", "SWC", "NDVI", "NDWI", "DOY"]
-m2 = ["Rs", "U2", "RHmax", "Tmin", "Tmax", "SWC", "NDVI", "NDWI", "DOY"]
-m3 = ["Rs", "U2", "RHmax", "Tmax", "SWC", "NDVI", "NDWI", "DOY"]
-m4 = ["Rs", "U2", "RHmax", "Tmax", "SWC", "NDWI", "DOY"]
-m5 = ["Rs", "U2", "Tmax", "SWC", "NDWI", "DOY"]
-m6 = ["Rs", "U2", "Tmax", "SWC", "DOY"]
-m7 = ["Rs", "Tmax", "SWC", "DOY"]
-m8 = ["Rs", "U2", "RHmin", "RHmax", "Tmin", "Tmax"]
-m9 = ["ETo", "SWC", "NDVI", "NDWI", "DOY"]
-m10 = ["ETo", "NDVI", "NDWI", "DOY"]
-m11 = ["Rs", "SWC", "NDVI", "NDWI", "DOY"]
-m12 = ["Rs", "NDVI", "NDWI", "DOY"]
-m13 = [
-    "Rs",
-    "U2",
-    "RHmin",
-    "RHmax",
-    "Tmin",
-    "Tmax",
-    "SWC",
-    "NDVI",
-    "NDWI",
-    "DOY",
-    "I",
-    "P",
-]
-m14 = ["Rs", "U2", "RHmin", "RHmax", "Tmin", "Tmax", "DOY"]
-
-
-FEATURES = {
-    "model 1": m1,
-    "model 2": m2,
-    "model 3": m3,
-    "model 4": m4,
-    "model 5": m5,
-    "model 6": m6,
-    "model 7": m7,
-    "model 8": m8,
-    "model 9": m9,
-    "model 10": m10,
-    "model 11": m11,
-    "model 12": m12,
-    "Final model": m14,
-}
-
 MAKE_DATA_PARAMETERS = {
-    "input_file": "G:/UNIPA/Dropbox/crop_coefficient/data/raw/data.xlsx",
+    "input_file": "G:/UNIPA/DOTTORATO/MACHINE_LEARNING/crop_coefficient/kc-predict/data/raw/data_us_arm.csv",
     "output_file": ROOT_DIR / "data/interim/data.pickle",
-    "visualize": False,
+    "visualize": True,
 }
 
 PREPROCESS_PARAMETERS = {
@@ -111,29 +117,29 @@ MODELS = {
     "rf": RandomForestRegressor(
         n_estimators=1000,
         max_depth=None,
-        random_state=12,
+        random_state=42,
         ccp_alpha=0.0,
     ),
-    'mlp': MLPRegressor(
+    "mlp": MLPRegressor(
         hidden_layer_sizes=(100, 100, 100),
         max_iter=1000,
         random_state=32652,  # 32652
     ),
-    'knn': KNeighborsRegressor(
-        n_neighbors=5,
-        weights='distance',
-        ),
+    "knn": KNeighborsRegressor(
+        n_neighbors=7,
+        weights="distance",
+    ),
 }
 
 PREDICTION_PARAMETERS = {
     "output": ROOT_DIR / "data/predicted" / "predicted.pickle",
-    "visualize": False,
+    "visualize": True,
 }
 
 POSTPROCESS_PARAMETERS = {
     "contamination": 0.01,
-    "seed": 352,
-    "visualize": False,
+    "seed": 42,
+    "visualize": True,
 }
 
 
@@ -166,10 +172,19 @@ def main(features_set, **kwargs):
         predictions[model_name.upper()] = kc_postprocessed
 
     kc_postprocessed = pd.concat(predictions, axis=1)
-    calc_metrics(kc_postprocessed)
+    # calc_metrics(kc_postprocessed)
 
 
-# %% Entry point
 if __name__ == "__main__":
-    features_set = "Final model"
+    # Config logging module
+    logging.basicConfig(
+        encoding="utf-8",
+        level=logging.INFO,
+        format="%(message)s",
+        handlers=[
+            # logging.FileHandler(ROOT_DIR / "logs/et_predict.log"),
+            logging.StreamHandler(),
+        ],
+    )
+    features_set = "2024_variouscrop"
     main(features_set)

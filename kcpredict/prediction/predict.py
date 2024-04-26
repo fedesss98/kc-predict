@@ -114,13 +114,12 @@ def rescale_series(eta):
 
 
 def plot_prediction(df, series_name, title=None):
-    g = sns.relplot(
-        data=df,
+    g = sns.relplot(data=df,
         x="Day",
         y=series_name,
         hue="Source",
         height=6,
-        aspect=1.6,
+        aspect=1.4,
     )
     if title is not None:
         g.fig.suptitle(title)

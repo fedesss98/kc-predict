@@ -10,10 +10,9 @@
       <excludeFolder url="file://$MODULE_DIR$/data/raw" />
       <excludeFolder url="file://$MODULE_DIR$/logs" />
       <excludeFolder url="file://$MODULE_DIR$/models" />
-      <excludeFolder url="file://$MODULE_DIR$/notebook" />
       <excludeFolder url="file://$MODULE_DIR$/src/kcpredict/data/.spyproject" />
-      <excludeFolder url="file://$MODULE_DIR$/visualization/data" />
       <excludeFolder url="file://$MODULE_DIR$/visualization/errors" />
+      <excludeFolder url="file://$MODULE_DIR$/.idea/copilot/chatSessions" />
     </content>
     <orderEntry type="jdk" jdkName="ml" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
