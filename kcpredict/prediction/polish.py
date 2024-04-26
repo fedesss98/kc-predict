@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import logging
 
 try:
     from predict import plot_prediction
@@ -40,7 +41,7 @@ def remove_outliers(df, detector):
     detector.fit(measured["Kc"].values.reshape(-1, 1))
     inliers = detector.predict(df["Kc"].values.reshape(-1, 1))
     inliers = df.loc[inliers == 1]
-    print(f"Removed {len(df)-len(inliers)} outliers")
+    logging.info(f"Removed {len(df)-len(inliers)} outliers")
     return inliers
 
 
@@ -55,8 +56,14 @@ def remove_noise(df):
 
 
 def swc_filter(df):
-    swc = pd.read_pickle(ROOT_DIR / "data/interim" / "data.pickle")["SWC"]
-    return df.loc[swc > 0.21]
+    try:
+        swc = pd.read_pickle(ROOT_DIR / "data/interim" / "data.pickle")["SWC"]
+        return df.loc[swc > 0.21]
+    except KeyError:
+        logging.warning("SWC not present in data, cannot use it as filter")
+
+    # If SWC filter fails, return the original dataframe
+    return df
 
 
 def rolling_analysis(df):
@@ -111,9 +118,8 @@ def make_trapezoidal(df):
 
     trapezoidal = df.groupby("season").mean(numeric_only=True)
     std = df.groupby("season").std(numeric_only=True)
-
-    df["trapezoidal"] = df["season"].map(trapezoidal.to_dict())
-    df["std"] = df["season"].map(std.to_dict())
+    df["trapezoidal"] = df["season"].map(trapezoidal.to_dict()['Kc'])
+    df["std"] = df["season"].map(std.to_dict()['Kc'])
 
     trpz = df.loc[:, ["trapezoidal", "std"]]
     trpz.to_pickle(ROOT_DIR / "data/predicted" / "trapezoidal.pickle")
@@ -138,12 +144,12 @@ def add_plot_trapezoidal(ax, measures=None):
         label=trapezoidal.columns[1],
     )
     if measures is not None:
-        ax.plot(
-            measures["trapezoidal"].dropna(),
-            ls="-.",
-            c="green",
-            label="Computed Trapezoidal",
-        )
+        ax.plot(measures["trapezoidal"].dropna(),
+                ls="-.", c="green", label="Computed Trapezoidal", )
+        error_up = measures["trapezoidal"] + measures["std"]
+        error_down = measures["trapezoidal"] - measures["std"]
+        ax.fill_between(error_up.index, error_up, error_down,
+                        color="green", alpha=0.2)
     return ax
 
 
@@ -164,18 +170,13 @@ def add_plot_predictions(df, ax):
 def add_plot_sma(df, ax):
     x = df.index
     y = df["Kc"].rolling(30).mean().values
-    ax.plot(
-        x,
-        y,
-        c="g",
-        label="Simple Moving Average",
-    )
+    ax.plot(x, y, c="g", label="Simple Moving Average")
     return ax
 
 
 # %%
 def make_plot(*frames, trapezoidal=True, measures=True, sma=False, predictions=True):
-    fig, ax = plt.subplots(figsize=(16, 12))
+    fig, ax = plt.subplots(figsize=(12, 8))
     ax.set_title("Kc Predictions")
     df = frames[0]
     if trapezoidal:
@@ -190,16 +191,17 @@ def make_plot(*frames, trapezoidal=True, measures=True, sma=False, predictions=T
     if sma:
         ax = add_plot_sma(df, ax)
 
-    ax.set_ylim(0, 1.4)
+    ax.set_ylim(0, 1.0)
     ax.legend()
     ax.grid(axis="both", linestyle="--")
+    ax.xticks = df.index
     plt.show()
     return ax
 
 
 # %%
 def main(outfile, visualize, contamination=0.01, seed=352):
-    print(f'{"-"*5} POLISH KC {"-"*5}')
+    logging.info(f'{"-"*5} POLISH KC {"-"*5}')
     kc = pd.read_pickle(ROOT_DIR / "data/predicted" / "predicted.pickle")
 
     # Outlier removal
@@ -213,7 +215,7 @@ def main(outfile, visualize, contamination=0.01, seed=352):
     save_data(kc_filtered, outfile)
 
     if visualize:
-        plot_prediction(kc, "Kc")
+        plot_prediction(kc, "Kc", title="Raw Predicted Kc")
         plot_prediction(kc_inlier, "Kc", title="Outliers Removed")
         plot_prediction(kc_denoised, "Kc", title="Noise Removed")
         plot_prediction(kc_filtered, "Kc", title="Filtered by SWC")
@@ -230,5 +232,5 @@ def main(outfile, visualize, contamination=0.01, seed=352):
 
 
 if __name__ == "__main__":
-    output_name = "kc_postprocessed"
-    main(visualize=True, contamination=0.0026, outfile=output_name)
+    output_name = "RF_kc_postprocessed" # Use the model name .upper()
+    main(seed=352, contamination=0.01, visualize=True, outfile=output_name)
