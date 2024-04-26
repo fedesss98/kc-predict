@@ -97,24 +97,21 @@ def make_trapezoidal(df):
     Final Season: 1Nov - 31Dec
     Initial Season: 1Gen - 31Mar
     """
-    # First create seasonal groups based on month
-    seasons = [
-        ("2018-01-01", "2018-03-31"),
-        ("2018-05-01", "2018-08-31"),
-        ("2018-10-01", "2019-03-31"),
-        ("2019-05-01", "2019-08-31"),
-        ("2019-10-01", "2020-03-31"),
-        ("2020-05-01", "2020-08-31"),
-        ("2020-10-01", "2021-03-31"),
-        ("2021-05-01", "2021-08-31"),
-        ("2021-10-01", "2022-05-31"),
-        ("2022-05-01", "2022-08-31"),
-        ("2022-10-01", "2023-05-31"),
-    ]
+    # Define the seasons
+    seasons = {
+        "Mid": set(range(5, 9)),  # May to August
+        "Extreme": set(list(range(1, 4)) + [10, 11, 12]),  # October to March
+    }
 
-    df["season"] = -1
-    for i, season in enumerate(seasons):
-        df.loc[pd.date_range(season[0], season[1]), "season"] = i
+    # Function to apply to every day in the index to determine the season
+    def get_season(date):
+        for season, months in seasons.items():
+            if date.month in months:
+                return f'{season}{date.year}'
+        return None
+
+    # Apply the function to the DataFrame
+    df["season"] = df.index.map(get_season)
 
     trapezoidal = df.groupby("season").mean(numeric_only=True)
     std = df.groupby("season").std(numeric_only=True)
