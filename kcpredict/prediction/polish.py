@@ -125,21 +125,15 @@ def make_trapezoidal(df):
 
 
 def add_plot_trapezoidal(ax, measures=None):
-    trapezoidal = get_trapezoidal().loc["2018-01":]
-    ax.plot(
-        trapezoidal.iloc[:, 0],
-        ls="--",
-        c="blue",
-        alpha=0.8,
-        label=trapezoidal.columns[0],
-    )
-    ax.plot(
-        trapezoidal.iloc[:, 1],
-        ls=":",
-        c="blue",
-        alpha=0.8,
-        label=trapezoidal.columns[1],
-    )
+    """
+    Plot the Allen-Rallo Kc trapezoidal curves along with the trapezoidal computed from data
+    """
+    # trapezoidal = get_trapezoidal().loc["2018-01":]
+    # ax.plot(trapezoidal.iloc[:, 0],
+    #     ls="--", c="blue", alpha=0.8, label=trapezoidal.columns[0],)
+    # ax.plot(trapezoidal.iloc[:, 1],
+    #     ls=":", c="blue", alpha=0.8, label=trapezoidal.columns[1],
+    # )
     if measures is not None:
         ax.plot(measures["trapezoidal"].dropna(),
                 ls="-.", c="green", label="Computed Trapezoidal", )
