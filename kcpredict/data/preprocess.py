@@ -157,9 +157,14 @@ def scale_data(df, scaler):
 #     json.dump(json_log, ROOT_DIR/'docs'/'run.json')
 
 
-def main(input_file, scaler, folds, k_seed, output_file, features=None, visualize=True):
+def main(input_file, scaler, folds, k_seed, output_file, features=None, visualize=True, root_folder=ROOT_DIR):
     logging.info(f'\n\n{"-"*5} PREPROCESSING {"-"*5}\n\n')
     logging.info(f"Preprocessing file:\n{input_file}")
+
+    if not isinstance(root_folder, Path):
+        root_folder = Path(root_folder)
+    input_file = root_folder / input_file
+    output_file = root_folder / output_file
 
     # Load and preprocess data
     data = get_data(input_file)

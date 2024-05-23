@@ -35,6 +35,8 @@ class ModelTrainer:
     def __init__(self, model, model_name, features, visualize_error=False, **kwargs):
         logging.info(f'\n\n{"-"*7} {model_name.upper()} MODEL TRAINING {"-"*7}\n\n')
 
+        self.root = kwargs.get("root_folder", ROOT_DIR)
+
         self.features = features
         self.model = model
         self.model_name = model_name
@@ -42,12 +44,30 @@ class ModelTrainer:
         # Relative Error DataFrame
         self.kt = pd.DataFrame()
 
-        # Find folds data
-        k = len(list(ROOT_DIR.glob("data/processed/test_fold_*")))
-        models = {}
-        self.scores = np.zeros((k, 2))
+        # Find number of folds
+        self.k = len(list(self.root.glob("data/processed/test_fold_*")))
+        self.scores = np.zeros((self.k, 2))
 
-        for fold in range(k):
+    @staticmethod
+    def error_function(x):
+        """
+        Set 1
+        a = .5
+        phase = -.5
+        q = 0.2
+        d = 10
+        v = 60 * 1/(x+d)
+        """
+        # Parameters
+        a = 0.5
+        phase = -0.5
+        q = 0.2
+        d = 10
+        v = 60 * 1 / (x + d)
+        return a * np.sin(np.pi * v * x - np.pi * phase) - q
+
+    def train_on_folds(self):
+        for fold in range(self.k):
             trained_model = self.train_model(self.model, fold)
             models[fold] = trained_model
             self.scores[fold] = self.test_model(trained_model, fold)
@@ -68,24 +88,6 @@ class ModelTrainer:
         #     log_run(model, np.array(scores), **kwargs)
 
         logging.info(f'\n\n{"/"*30}\n')
-
-    @staticmethod
-    def error_function(x):
-        """
-        Set 1
-        a = .5
-        phase = -.5
-        q = 0.2
-        d = 10
-        v = 60 * 1/(x+d)
-        """
-        # Parameters
-        a = 0.5
-        phase = -0.5
-        q = 0.2
-        d = 10
-        v = 60 * 1 / (x + d)
-        return a * np.sin(np.pi * v * x - np.pi * phase) - q
 
     def train_model(self, model, k):
         train = pd.read_pickle(ROOT_DIR / "data/processed" / f"train_fold_{k}.pickle")
