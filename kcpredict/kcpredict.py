@@ -8,7 +8,8 @@ All the pipeline to predict Kc
 """
 import pandas as pd
 import logging
-
+import tomli
+import os
 
 from data.make_data import main as make_data
 from data.preprocess import main as preprocess_data
@@ -27,76 +28,14 @@ from pathlib import Path
 
 ROOT_DIR = Path(__file__).parent.parent
 
-# %% FEATURES
-# m0 = [
-#     "ETo",
-#     "U2",
-#     "RHmin",
-#     "RHmax",
-#     "Tmin",
-#     "Tmax",
-#     "SWC",
-#     "NDVI",
-#     "NDWI",
-#     "DOY",
-#     "I",
-#     "P",
-#     "EToC",
-#     "IC",
-#     "PC",
-#     "LID",
-#     "LPD",
-#     "LWD",
-# ]
-# m1 = ["Rs", "U2", "RHmin", "RHmax", "Tmin", "Tmax", "SWC", "NDVI", "NDWI", "DOY"]
-# m2 = ["Rs", "U2", "RHmax", "Tmin", "Tmax", "SWC", "NDVI", "NDWI", "DOY"]
-# m3 = ["Rs", "U2", "RHmax", "Tmax", "SWC", "NDVI", "NDWI", "DOY"]
-# m4 = ["Rs", "U2", "RHmax", "Tmax", "SWC", "NDWI", "DOY"]
-# m5 = ["Rs", "U2", "Tmax", "SWC", "NDWI", "DOY"]
-# m6 = ["Rs", "U2", "Tmax", "SWC", "DOY"]
-# m7 = ["Rs", "Tmax", "SWC", "DOY"]
-# m8 = ["Rs", "U2", "RHmin", "RHmax", "Tmin", "Tmax"]
-# m9 = ["ETo", "SWC", "NDVI", "NDWI", "DOY"]
-# m10 = ["ETo", "NDVI", "NDWI", "DOY"]
-# m11 = ["Rs", "SWC", "NDVI", "NDWI", "DOY"]
-# m12 = ["Rs", "NDVI", "NDWI", "DOY"]
-# m13 = [
-#     "Rs",
-#     "U2",
-#     "RHmin",
-#     "RHmax",
-#     "Tmin",
-#     "Tmax",
-#     "SWC",
-#     "NDVI",
-#     "NDWI",
-#     "DOY",
-#     "I",
-#     "P",
-# ]
-# m14 = ["Rs", "U2", "RHmin", "RHmax", "Tmin", "Tmax", "DOY"]
 
+FEATURES = {"2024_variouscrop":
+                [
+                    "DOY", "Tmin", "Tmax", "Tdew", "Uwind", "Vwind", "Rs",
+                    # "ETo"
+                ]
+            }
 
-# FEATURES = {
-#     "model 1": m1,
-#     "model 2": m2,
-#     "model 3": m3,
-#     "model 4": m4,
-#     "model 5": m5,
-#     "model 6": m6,
-#     "model 7": m7,
-#     "model 8": m8,
-#     "model 9": m9,
-#     "model 10": m10,
-#     "model 11": m11,
-#     "model 12": m12,
-#     "Final model": m14,
-# }
-
-
-FEATURES = {"2024_variouscrop": ["Tmin", "Tmax", "Tdew", "Uwind", "Vwind", "Rs", "ETo"]}
-
-# %% PARAMETERS
 
 MAKE_DATA_PARAMETERS = {
     "input_file": "G:/UNIPA/DOTTORATO/MACHINE_LEARNING/crop_coefficient/kc-predict/data/raw/data_us_arm.csv",
@@ -137,14 +76,69 @@ PREDICTION_PARAMETERS = {
 }
 
 POSTPROCESS_PARAMETERS = {
-    "contamination": 0.01,
+    "contamination": 0.1,
     "seed": 42,
     "visualize": True,
 }
 
 
-# %% MAIN
-def main(features_set, **kwargs):
+class KcPredictor:
+    def __init__(self, root, *args, **kwargs):
+        if not os.path.isdir(root):
+            raise FileNotFoundError(f"{root} is not a valid directory")
+        self.root = Path(root)
+        logging.info(f"Root directory: {self.root}")
+
+        # Read and save TOML configuration file
+        with open(self.root / "config.toml", "rb") as f:
+            self.config = tomli.load(f)
+        # Save features to be used
+        self.features = self.config["preprocess"]["features"]
+
+        # Add the root folder to the configuration
+        for key in ["make-data", "preprocess", "prediction"]:
+            self.config[key]["root_folder"] = self.root
+
+        # Read and Preprocess data
+        make_data(**self.config["make-data"])
+        preprocess_data(**self.config["preprocess"])
+
+        # Initialize models
+        self._models = self.models(self.config["models"])
+
+    @property
+    def models(self):
+        return self._models
+
+    @models.setter
+    def models(self, models_config):
+        models_map = {
+            "rf": RandomForestRegressor,
+            "mlp": MLPRegressor,
+            "knn": KNeighborsRegressor,
+        }
+        for model_name, model_config in models_config.items():
+            model = models_map[model_name]
+            self._models[model_name] = model(**model_config)
+
+        return self._models
+
+    def predict(self):
+        for model_name, model in self.models.items():
+            model_kwargs = dict(
+                model=model, model_name=model_name, features=self.features, root_folder=self.root
+            )
+            # Train the model on each fold and save the best-performing one
+            trainer = ModelTrainer(**model_kwargs)
+
+
+
+
+def main(root):
+    predictor = KcPredictor(root)
+
+
+def second_main(features_set, **kwargs):
     make_data(**MAKE_DATA_PARAMETERS)
 
     features = FEATURES[features_set]
@@ -186,5 +180,5 @@ if __name__ == "__main__":
             logging.StreamHandler(),
         ],
     )
-    features_set = "2024_variouscrop"
-    main(features_set)
+    root = r"G:\UNIPA\DOTTORATO\MACHINE_LEARNING\crop_coefficient\kc-predict\data\usarm_fede"
+    main(root)
