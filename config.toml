@@ -1,0 +1,28 @@
+# CONFIGURATION FILE
+run = 1
+project_dir = "C:\\Users\\fedes\\UNIPA\\MACHINE_LEARNING\\kc-predict\\data\\usarm_fede"
+
+[make-data]
+input_file = "data\\raw\\data_us_arm.csv"
+output_file = "data\\data.pickle"
+
+[preprocess]
+input_file = "data\\data.pickle"
+output_file = "data\\preprocessed"
+features = ["DOY", "Tmin", "Tmax", "Tdew", "Uwind", "Vwind", "Rs"]
+scaler = "MinMax"
+folds = 4
+k_seed = 241
+
+[models.rf]
+n_estimators=1000
+random_state=42
+
+[models.mlp]
+hidden_layer_sizes=[100, 100, 100]
+max_iter=1000
+random_state=32652
+
+[models.knn]
+n_neighbors=7
+weights="distance"
