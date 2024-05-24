@@ -92,8 +92,9 @@ class KcPredictor:
         # Read and save TOML configuration file
         with open(self.root / "config.toml", "rb") as f:
             self.config = tomli.load(f)
-        # Save features to be used
-        self.features = self.config["preprocess"]["features"]
+
+        # Save or create project directory
+        self.project_dire = self.setup_project()
 
         # Add the root folder to the configuration
         for key in ["make-data", "preprocess", "prediction"]:
@@ -102,9 +103,25 @@ class KcPredictor:
         # Read and Preprocess data
         make_data(**self.config["make-data"])
         preprocess_data(**self.config["preprocess"])
+        
+        # Save features to be used
+        self.features = self.config["preprocess"]["features"]
 
         # Initialize models
         self._models = self.models(self.config["models"])
+
+        print("END")
+
+
+    def setup_project(self):
+        project_dir = self.config.get("project-dir", self.root)
+        if not os.path.isdir(project_dir):
+            os.makedirs(project_dir)
+            logging.info(f"Created project folder: {project_dir}")
+        else:
+            logging.info(f"Project folder set to: {project_dir}")
+        return project_dir
+
 
     @property
     def models(self):
@@ -129,7 +146,9 @@ class KcPredictor:
                 model=model, model_name=model_name, features=self.features, root_folder=self.root
             )
             # Train the model on each fold and save the best-performing one
-            trainer = ModelTrainer(**model_kwargs)
+            # trainer = ModelTrainer(**model_kwargs)
+            # trainer.train_on_folds()
+
 
 
 
@@ -180,5 +199,6 @@ if __name__ == "__main__":
             logging.StreamHandler(),
         ],
     )
-    root = r"G:\UNIPA\DOTTORATO\MACHINE_LEARNING\crop_coefficient\kc-predict\data\usarm_fede"
+    # root = r"G:\UNIPA\DOTTORATO\MACHINE_LEARNING\crop_coefficient\kc-predict\data\usarm_fede"
+    root = ROOT_DIR
     main(root)
