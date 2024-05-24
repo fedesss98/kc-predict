@@ -32,21 +32,28 @@ ROOT_DIR = Path(__file__).parent.parent.parent
 
 
 class ModelTrainer:
-    def __init__(self, model, model_name, features, visualize_error=False, **kwargs):
+    def __init__(self, model, model_name, features, input_file, output_file, root_folder=ROOT_DIR, visualize_error=False, **kwargs):
         logging.info(f'\n\n{"-"*7} {model_name.upper()} MODEL TRAINING {"-"*7}\n\n')
 
-        self.root = kwargs.get("root_folder", ROOT_DIR)
+        self.root_folder = Path(root_folder)
+        self.input_file = root_folder / input_file
+        self.output_file = root_folder / output_file
 
         self.features = features
         self.model = model
         self.model_name = model_name
 
+
         # Relative Error DataFrame
         self.kt = pd.DataFrame()
 
         # Find number of folds
-        self.k = len(list(self.root.glob("data/processed/test_fold_*")))
+        self.k = len(list(self.root_folder.glob("data/processed/test_fold_*")))
         self.scores = np.zeros((self.k, 2))
+        # For each fold one model is trained
+        self.trained_models = {}
+
+        self.visualize_error = visualize_error
 
     @staticmethod
     def error_function(x):
@@ -69,10 +76,10 @@ class ModelTrainer:
     def train_on_folds(self):
         for fold in range(self.k):
             trained_model = self.train_model(self.model, fold)
-            models[fold] = trained_model
+            self.trained_models[fold] = trained_model
             self.scores[fold] = self.test_model(trained_model, fold)
 
-        if visualize_error:
+        if self.visualize_error:
             self.print_error()
         self.log_model_scores()
 
@@ -81,16 +88,17 @@ class ModelTrainer:
         logging.info(f"Score Variance: {self.scores.var(axis=0)[0]:.4f}")
 
         # Save the best scoring model
-        self.best_model = models[np.argmax(self.scores, axis=0)[0]]
+        self.best_model = self.trained_models[np.argmax(self.scores, axis=0)[0]]
         self.save_model()
 
         # if log:
         #     log_run(model, np.array(scores), **kwargs)
 
+        # Print ending string
         logging.info(f'\n\n{"/"*30}\n')
 
     def train_model(self, model, k):
-        train = pd.read_pickle(ROOT_DIR / "data/processed" / f"train_fold_{k}.pickle")
+        train = pd.read_pickle(self.root / "data/processed" / f"train_fold_{k}.pickle")
         X_train = train.loc[:, self.features]
         y_train = train.loc[:, "ETa"].values.ravel()
         model.fit(X_train, y_train)
