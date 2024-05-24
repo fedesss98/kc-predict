@@ -121,11 +121,14 @@ def impute_features(df, features):
 def split_folds(df, k, k_seed=2):
     folds = KFold(k, shuffle=True, random_state=k_seed)
     df = df.dropna()
+    folds_data = {}
     for k, [train_index, test_index] in enumerate(folds.split(df)):
         train = df.iloc[train_index]
         test = df.iloc[test_index]
-        make_pickle(train, ROOT_DIR / "data/processed" / f"train_fold_{k}.pickle")
-        make_pickle(test, ROOT_DIR / "data/processed" / f"test_fold_{k}.pickle")
+        folds_data[k] = (train, test)
+        # make_pickle(train, output_file / f"train_fold_{k}.pickle")
+        # make_pickle(test, output_file / f"test_fold_{k}.pickle")
+    return folds_data
 
 
 def scale_data(df, scaler):
@@ -192,15 +195,14 @@ def main(input_file, scaler, folds, k_seed, output_file, features=None, visualiz
     make_pickle(predict, ROOT_DIR / "data/processed" / "predict.pickle")
 
     # Split data into train and test sets
-    split_folds(df, folds, k_seed)
+    folds_data = split_folds(df, folds, k_seed)
 
     # Iterate over folds
     for k in range(folds):
         train_file = ROOT_DIR / "data/processed" / f"train_fold_{k}.pickle"
         test_file = ROOT_DIR / "data/processed" / f"test_fold_{k}.pickle"
 
-        train = pd.read_pickle(train_file)
-        test = pd.read_pickle(test_file)
+        train, test = folds_data[k]
 
         # Scale fold
         train = scale_data(train, scaler)
