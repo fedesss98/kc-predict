@@ -183,7 +183,7 @@ def main(input_file, scaler, folds, k_seed, output_file, features=None, visualiz
     df = impute_features(df, features)
 
     # Save and visualize imputed data
-    make_pickle(df, ROOT_DIR / "data/interim" / "imputed.pickle")
+    make_pickle(df, output_file / "imputed.pickle")
     if visualize:
         df.plot(subplots=True, figsize=(10, 16))
         plt.savefig(ROOT_DIR / "visualization/data" / f"processed_{NN}_{scaler}.png")
@@ -192,15 +192,15 @@ def main(input_file, scaler, folds, k_seed, output_file, features=None, visualiz
     # Save data to predict
     predict = df.loc[~df.index.isin(df.dropna().index), features]
     predict = scale_data(predict, scaler)
-    make_pickle(predict, ROOT_DIR / "data/processed" / "predict.pickle")
+    make_pickle(predict, output_file / "predict.pickle")
 
     # Split data into train and test sets
     folds_data = split_folds(df, folds, k_seed)
 
     # Iterate over folds
     for k in range(folds):
-        train_file = ROOT_DIR / "data/processed" / f"train_fold_{k}.pickle"
-        test_file = ROOT_DIR / "data/processed" / f"test_fold_{k}.pickle"
+        train_file = output_file / f"train_fold_{k}.pickle"
+        test_file = output_file / f"test_fold_{k}.pickle"
 
         train, test = folds_data[k]
 
