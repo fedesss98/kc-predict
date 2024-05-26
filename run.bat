@@ -1,4 +1,3 @@
 @echo off
-cd %~dp0
-python kc-predict\kcpredict\kcpredict.py
+python %~dp0\kcpredict\kcpredict.py
 pause
