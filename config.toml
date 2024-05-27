@@ -1,15 +1,18 @@
 # CONFIGURATION FILE
+# It is important that if ETo is not included in the features set,
+# the raw data extracted in make-data are saved in an output folder named "data\\raw"
+# as when creating kc series the ETo is searched automatically in that folder
 id = 1
-project_dir = "C:\\Users\\fedes\\UNIPA\\MACHINE_LEARNING\\kc-predict\\data\\usarm_fede"
+project_dir = "G:\\UNIPA\\DOTTORATO\\MACHINE_LEARNING\\crop_coefficient\\kc-predict\\us_arm_fede"
 
 [make-data]
 input_file = "data\\raw\\data_us_arm.csv"
-output = "data\\"
+output_path = "data\\raw"
 visualize = false
 
 [preprocess]
-input = "data\\"
-output = "data\\preprocessed"
+input_path = "data\\raw"
+output_path = "data\\preprocessed"
 features = ["DOY", "Tmin", "Tmax", "Tdew", "Uwind", "Vwind", "Rs"]
 scaler = "MinMax"
 folds = 2
@@ -30,6 +33,6 @@ random_state = 42
 # weights = "distance"
 
 [prediction]
-input = "data\\preprocessed"
-output = "data\\predictions"
+input_path = "data\\preprocessed"
+output_path = "data\\predictions"
 visualize = true
