@@ -112,7 +112,11 @@ class KcPredictor:
         self.features = self.config["preprocess"]["features"]
 
         # Initialize models
-        self._models = self.models(self.config["models"])
+        self._models = {}
+        self.models = self.config["models"]
+
+        # Predict Kc
+        self.predict()
 
         print("END")
 
@@ -172,26 +176,25 @@ class KcPredictor:
         return self._models
 
     @models.setter
-    def models(self, models_config):
+    def models(self, models_config) -> dict:
         models_map = {
             "rf": RandomForestRegressor,
             "mlp": MLPRegressor,
             "knn": KNeighborsRegressor,
         }
         for model_name, model_config in models_config.items():
-            model = models_map[model_name]
-            self._models[model_name] = model(**model_config)
-
+            self._models[model_name] = models_map[model_name](**model_config)
         return self._models
 
     def predict(self):
         for model_name, model in self.models.items():
             model_kwargs = dict(
-                model=model, model_name=model_name, features=self.features, root_folder=self.root
+                model=model, model_name=model_name, features=self.features, 
+                **self.config["prediction"]
             )
             # Train the model on each fold and save the best-performing one
-            # trainer = ModelTrainer(**model_kwargs)
-            # trainer.train_on_folds()
+            trainer = ModelTrainer(**model_kwargs)
+            trainer.train_on_folds()
 
 
 
