@@ -44,34 +44,13 @@ class ModelTrainer:
         self.model_name = model_name
 
 
-        # Relative Error DataFrame
-        self.kt = pd.DataFrame()
-
         # Find number of folds
-        self.k = len(list(self.root_folder.glob("data/processed/test_fold_*")))
+        self.k = len(list(self.input_folder.glob("test_fold_*")))
+        if self.k == 0:
+            raise FileNotFoundError(f"No folds data found in input folder {self.input_folder}")
         self.scores = np.zeros((self.k, 2))
         # For each fold one model is trained
         self.trained_models = {}
-
-        self.visualize_error = visualize_error
-
-    @staticmethod
-    def error_function(x):
-        """
-        Set 1
-        a = .5
-        phase = -.5
-        q = 0.2
-        d = 10
-        v = 60 * 1/(x+d)
-        """
-        # Parameters
-        a = 0.5
-        phase = -0.5
-        q = 0.2
-        d = 10
-        v = 60 * 1 / (x + d)
-        return a * np.sin(np.pi * v * x - np.pi * phase) - q
 
     def train_on_folds(self):
         for fold in range(self.k):
@@ -79,9 +58,8 @@ class ModelTrainer:
             self.trained_models[fold] = trained_model
             self.scores[fold] = self.test_model(trained_model, fold)
 
-        if self.visualize_error:
-            self.print_error()
-        self.log_model_scores()
+        # Save scores to file
+        np.savetxt(self.output_file / f"{self.model_name}_scores.csv", self.scores, delimiter=";")
 
         logging.info(f"R2 Scores Mean: {self.scores.mean(axis=0)[0]:.2f}")
         logging.info(f"R2 Scores Max: {self.scores.max(axis=0)[0]:.2f}")
@@ -90,9 +68,6 @@ class ModelTrainer:
         # Save the best scoring model
         self.best_model = self.trained_models[np.argmax(self.scores, axis=0)[0]]
         self.save_model()
-
-        # if log:
-        #     log_run(model, np.array(scores), **kwargs)
 
         # Print ending string
         logging.info(f'\n\n{"/"*30}\n')
@@ -103,40 +78,6 @@ class ModelTrainer:
         y_train = train.loc[:, "ETa"].values.ravel()
         model.fit(X_train, y_train)
         return model
-
-    def print_error(self):
-        # Load complete set of measures
-        measures = pd.read_pickle(ROOT_DIR / "data/processed" / "processed.pickle")[
-            "ETa"
-        ]
-        measures = measures.drop(index=pd.date_range("2018-01-01", "2019-01-01"))
-        fig, (ax1, ax2) = plt.subplots(2, figsize=(12, 10))
-        fig.suptitle("Relative Errors of predictions across folds")
-        ax_ref = ax2.twinx()
-        ax_interp = ax2.twiny()
-        g1 = sns.scatterplot(self.kt, x="Day", y="Kt", hue="fold", ax=ax1)
-        g2 = sns.scatterplot(self.kt, x="Day", y="Kt", hue="fold", ax=ax2)
-        measures.plot(ax=ax_ref, color="orange", zorder=0, alpha=0.3)
-        ax_ref.tick_params(axis="y", labelcolor="darkorange")
-        ax2.set_ylim(-1, 1)
-        ax2.set_title("Zoom in w/ respect to ETa scaled")
-        ax2.set_zorder(2)
-        ax2.set_facecolor("none")
-        x_interp = np.linspace(0, 1, 200)
-        y_interp = self.error_function(x_interp)
-        ax_interp.plot(x_interp, y_interp)
-        plt.tight_layout()
-        plt.show()
-        return None
-
-    def make_kt(self, kt: pd.Series, k: int):
-        # Remove outliers farther from 2 times the std
-        kt.loc[kt.abs() > 6 * kt.std()] = np.nan
-        # Make it a DataFrame
-        kt = kt.to_frame(name="Kt")
-        # Add fold information
-        kt["fold"] = k + 1
-        self.kt = pd.concat([self.kt, kt])
 
     def test_model(self, model, k):
         test = pd.read_pickle(self.input_folder / f"test_fold_{k}.pickle")
@@ -151,8 +92,7 @@ class ModelTrainer:
         # Compute scores on rescaled values
         r2 = r2_score(measures_test, prediction_test)
         rmse = mean_squared_error(measures_test, prediction_test, squared=False)
-        kt = prediction_test / measures_test - 1
-        self.make_kt(kt, k)
+
         logging.info(
             f"R2 score on test {k}: {r2_scaled:.2f} - {r2:.2f}"
             f"\nRMSE score on test: {rmse_scaled:.2f} - {rmse:.2f}"

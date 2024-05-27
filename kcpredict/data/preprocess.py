@@ -126,8 +126,8 @@ def split_folds(df, k, k_seed=2):
         train = df.iloc[train_index]
         test = df.iloc[test_index]
         folds_data[k] = (train, test)
-        # make_pickle(train, output_file / f"train_fold_{k}.pickle")
-        # make_pickle(test, output_file / f"test_fold_{k}.pickle")
+        # make_pickle(train, output_folder / f"train_fold_{k}.pickle")
+        # make_pickle(test, output_folder / f"test_fold_{k}.pickle")
     return folds_data
 
 
@@ -146,18 +146,6 @@ def scale_data(df, scaler, scaler_file=ROOT_DIR / "models" / "scaler.joblib"):
     except Exception as e:
         print(f"Error with the scaler: {str(e)}")
     return scaled_data
-
-
-# def write_log(input_file, scaler, output_file, visualize, df, train, test):
-#     json_log = {
-#         "input_file": input_file,
-#         "output_file": output_file,
-#         "scaler": scaler,
-#         "database_shape": df.shape(),
-#         "train_set_length": len(train),
-#         "test_set_length": len(test),
-#     }
-#     json.dump(json_log, ROOT_DIR/'docs'/'run.json')
 
 
 def main(input, output, scaler, folds, k_seed, features=None, visualize=True, root_folder=ROOT_DIR):
@@ -185,7 +173,7 @@ def main(input, output, scaler, folds, k_seed, features=None, visualize=True, ro
     make_pickle(df, output_folder / "imputed.pickle")
     if visualize:
         df.plot(subplots=True, figsize=(10, 16))
-        plt.savefig(root_folder / "visualization/" / f"processed_{NN}_{scaler}.png")
+        plt.savefig(root_folder / "visualization/" / f"processed_{scaler}.png")
         plt.show()
 
     # Save data to predict
@@ -210,8 +198,6 @@ def main(input, output, scaler, folds, k_seed, features=None, visualize=True, ro
         # Save fold
         make_pickle(train, train_file)
         make_pickle(test, test_file)
-
-    # write_log(input_file, scaler, output_file, visualize, df, train, test)
 
     # Scale and save final data
     df = scale_data(df, scaler, output_folder / "scaler.joblib")
