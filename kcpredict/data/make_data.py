@@ -85,9 +85,9 @@ def main(input_file, output, visualize=True, root_folder=ROOT_DIR):
     # Optionally visualize the data
     if visualize:
         data.plot(subplots=True, figsize=(10, 16))
-        savepath = root_folder / "visualization/data/raw_data.png"
+        savepath = root_folder / "visualization/raw_data.png"
         if savepath.exists():
-            plt.savefig(root_folder / "visualization/data" / "raw_data.png")
+            plt.savefig(root_folder / "visualization" / "raw_data.png")
         else:
             plt.show()
             logging.info("Visualization folder not found. Skipping visualization.")
