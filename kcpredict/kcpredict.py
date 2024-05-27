@@ -168,6 +168,13 @@ class KcPredictor:
             os.makedirs(visualization_dir)
             logging.info(f"Created visualization folder: {visualization_dir}")
 
+        # Create a models folder if it does not exist
+        models_dir = project_dir / "models"
+        if not os.path.isdir(models_dir):
+            os.makedirs(models_dir)
+            logging.info(f"Created models folder: {models_dir}")
+
+
         return project_dir
 
 

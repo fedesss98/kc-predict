@@ -177,7 +177,7 @@ def main(input, output, scaler, folds, k_seed, features=None, visualize=True, ro
 
     # Save data to predict
     predict = df.loc[~df.index.isin(df.dropna().index), features]
-    predict = scale_data(predict, scaler, output_folder / "scaler_predict.joblib")
+    predict = scale_data(predict, scaler, root_folder / "models/scaler_predict.joblib")
     make_pickle(predict, output_folder / "predict.pickle")
 
     # Split data into train and test sets
@@ -191,15 +191,15 @@ def main(input, output, scaler, folds, k_seed, features=None, visualize=True, ro
         train, test = folds_data[k]
 
         # Scale fold
-        train = scale_data(train, scaler, output_folder / "scaler_train.joblib")
-        test = scale_data(test, scaler, output_folder / "scaler_test.joblib")
+        train = scale_data(train, scaler, root_folder / "models/scaler_train.joblib")
+        test = scale_data(test, scaler, root_folder / "models/scaler_test.joblib")
 
         # Save fold
         make_pickle(train, train_file)
         make_pickle(test, test_file)
 
     # Scale and save final data
-    df = scale_data(df, scaler, output_folder / "scaler.joblib")
+    df = scale_data(df, scaler, root_folder / "models/scaler.joblib")
     make_pickle(df, output_folder / "preprocessed.pickle")
 
     # Visualize processed data
