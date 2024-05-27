@@ -94,11 +94,14 @@ class KcPredictor:
             self.config = tomli.load(f)
 
         # Save or create project directory
-        self.project_dire = self.setup_project()
-
+        self.project_dir = self.setup_project()
+        
         # Add the root folder to the configuration
         for key in ["make-data", "preprocess", "prediction"]:
-            self.config[key]["root_folder"] = self.root
+            try:
+                self.config[key]["root_folder"] = self.project_dir
+            except KeyError:
+                logging.warning(f"Key {key} not found in configuration file")
 
         # Read and Preprocess data
         make_data(**self.config["make-data"])
@@ -114,12 +117,52 @@ class KcPredictor:
 
 
     def setup_project(self):
-        project_dir = self.config.get("project-dir", self.root)
+        """
+        Set the project directory where all the data will be saved.
+        If the directory does not exist, it will be created.
+        If the directory is not specified in the configuration file, it will be set to the root directory.
+        The source dataset is copy-pasted from the root directory, if the dataset is not already in the project directory.
+        """
+        project_dir = Path(self.config.get("project_dir", self.root))
         if not os.path.isdir(project_dir):
             os.makedirs(project_dir)
             logging.info(f"Created project folder: {project_dir}")
         else:
             logging.info(f"Project folder set to: {project_dir}")
+
+        raw_data_file = Path(self.config["make-data"]["input_file"])
+
+        # Check if all needed directories exist, otherwise create them
+        for key in ["make-data", "preprocess", "prediction"]:
+            if self.config[key].get("output", None):
+                output_dir = project_dir / Path(self.config[key]["output"])
+                if not os.path.isdir(output_dir):
+                    os.makedirs(output_dir)
+                    logging.info(f"Created output folder: {output_dir}")
+
+        # Check if the raw data file is not already in the project directory
+        if not os.path.isfile(project_dir / raw_data_file):
+            # Then check if the raw data file is in the root directory
+            if os.path.isfile(self.root / raw_data_file):
+                # First check if destination directory exists
+                if not os.path.isdir(project_dir / raw_data_file.parent):
+                    os.makedirs(project_dir / raw_data_file.parent)
+                    logging.info(f"Created data folder: {project_dir / raw_data_file.parent}")
+                # Copy the raw data file to the project directory
+                shutil.copy(self.root / raw_data_file, project_dir / raw_data_file)
+                logging.info(f"Copied raw data file to project directory: {project_dir}")
+            else:
+                raise FileNotFoundError(f"Raw data file not found in project directory or root directory")
+        
+        # Copy the configuration file to the project directory
+        shutil.copy(self.root / "config.toml", project_dir / "config.toml")
+
+        # Create a visualization folder if it does not exist
+        visualization_dir = project_dir / "visualization"
+        if not os.path.isdir(visualization_dir):
+            os.makedirs(visualization_dir)
+            logging.info(f"Created visualization folder: {visualization_dir}")
+
         return project_dir
 
 
