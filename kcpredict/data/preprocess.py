@@ -131,7 +131,7 @@ def split_folds(df, k, k_seed=2):
     return folds_data
 
 
-def scale_data(df, scaler):
+def scale_data(df, scaler, scaler_file=ROOT_DIR / "models" / "scaler.joblib"):
     """
     Scale data using selected scaler:
     - Standard Scaler (zero mean and unit variance) [DEFAULT]
@@ -140,7 +140,7 @@ def scale_data(df, scaler):
     try:
         # Fit and save scaler
         scaler.fit(df)
-        joblib.dump(scaler, ROOT_DIR / "models" / "scaler.joblib")
+        joblib.dump(scaler, scaler_file)
         scaled_values = scaler.transform(df)
         scaled_data = pd.DataFrame(scaled_values, columns=df.columns, index=df.index)
     except Exception as e:
@@ -160,14 +160,13 @@ def scale_data(df, scaler):
 #     json.dump(json_log, ROOT_DIR/'docs'/'run.json')
 
 
-def main(input_file, scaler, folds, k_seed, output_file, features=None, visualize=True, root_folder=ROOT_DIR):
+def main(input, output, scaler, folds, k_seed, features=None, visualize=True, root_folder=ROOT_DIR):
     logging.info(f'\n\n{"-"*5} PREPROCESSING {"-"*5}\n\n')
-    logging.info(f"Preprocessing file:\n{input_file}")
 
     if not isinstance(root_folder, Path):
         root_folder = Path(root_folder)
-    input_file = root_folder / input_file
-    output_file = root_folder / output_file
+    input_file = root_folder / input / "data.pickle"
+    output_folder = root_folder / output
 
     # Load and preprocess data
     data = get_data(input_file)
@@ -183,30 +182,30 @@ def main(input_file, scaler, folds, k_seed, output_file, features=None, visualiz
     df = impute_features(df, features)
 
     # Save and visualize imputed data
-    make_pickle(df, output_file / "imputed.pickle")
+    make_pickle(df, output_folder / "imputed.pickle")
     if visualize:
         df.plot(subplots=True, figsize=(10, 16))
-        plt.savefig(ROOT_DIR / "visualization/data" / f"processed_{NN}_{scaler}.png")
+        plt.savefig(root_folder / "visualization/" / f"processed_{NN}_{scaler}.png")
         plt.show()
 
     # Save data to predict
     predict = df.loc[~df.index.isin(df.dropna().index), features]
-    predict = scale_data(predict, scaler)
-    make_pickle(predict, output_file / "predict.pickle")
+    predict = scale_data(predict, scaler, output_folder / "scaler_predict.joblib")
+    make_pickle(predict, output_folder / "predict.pickle")
 
     # Split data into train and test sets
     folds_data = split_folds(df, folds, k_seed)
 
     # Iterate over folds
     for k in range(folds):
-        train_file = output_file / f"train_fold_{k}.pickle"
-        test_file = output_file / f"test_fold_{k}.pickle"
+        train_file = output_folder / f"train_fold_{k}.pickle"
+        test_file = output_folder / f"test_fold_{k}.pickle"
 
         train, test = folds_data[k]
 
         # Scale fold
-        train = scale_data(train, scaler)
-        test = scale_data(test, scaler)
+        train = scale_data(train, scaler, output_folder / "scaler_train.joblib")
+        test = scale_data(test, scaler, output_folder / "scaler_test.joblib")
 
         # Save fold
         make_pickle(train, train_file)
@@ -215,8 +214,8 @@ def main(input_file, scaler, folds, k_seed, output_file, features=None, visualiz
     # write_log(input_file, scaler, output_file, visualize, df, train, test)
 
     # Scale and save final data
-    df = scale_data(df, scaler)
-    make_pickle(df, output_file)
+    df = scale_data(df, scaler, output_folder / "scaler.joblib")
+    make_pickle(df, output_folder / "preprocessed.pickle")
 
     logging.info(f'\n\n{"/"*30}')
 

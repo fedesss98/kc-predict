@@ -32,12 +32,12 @@ ROOT_DIR = Path(__file__).parent.parent.parent
 
 
 class ModelTrainer:
-    def __init__(self, model, model_name, features, input_file, output_file, root_folder=ROOT_DIR, visualize_error=False, **kwargs):
+    def __init__(self, model, model_name, features, input, output, root_folder=ROOT_DIR, visualize_error=False, **kwargs):
         logging.info(f'\n\n{"-"*7} {model_name.upper()} MODEL TRAINING {"-"*7}\n\n')
 
         self.root_folder = Path(root_folder)
-        self.input_file = root_folder / input_file
-        self.output_file = root_folder / output_file
+        self.input_folder = root_folder / input
+        self.output_file = root_folder / output / "predicted.pickle"
 
         self.features = features
         self.model = model
@@ -98,7 +98,7 @@ class ModelTrainer:
         logging.info(f'\n\n{"/"*30}\n')
 
     def train_model(self, model, k):
-        train = pd.read_pickle(self.root / "data/processed" / f"train_fold_{k}.pickle")
+        train = pd.read_pickle(self.input_folder / f"train_fold_{k}.pickle")
         X_train = train.loc[:, self.features]
         y_train = train.loc[:, "ETa"].values.ravel()
         model.fit(X_train, y_train)
@@ -139,15 +139,15 @@ class ModelTrainer:
         self.kt = pd.concat([self.kt, kt])
 
     def test_model(self, model, k):
-        test = pd.read_pickle(ROOT_DIR / "data/processed" / f"test_fold_{k}.pickle")
+        test = pd.read_pickle(self.input_folder / f"test_fold_{k}.pickle")
         X_test, y_test = test.loc[:, self.features], test.loc[:, "ETa"]
         prediction_test = model.predict(X_test)
         # Compute scores on scaled values
         r2_scaled = r2_score(y_test, prediction_test)
         rmse_scaled = mean_squared_error(y_test, prediction_test, squared=False)
         # Rescale values
-        prediction_test = self.rescale_series(prediction_test)
-        measures_test = self.rescale_series(y_test.values, y_test.index).squeeze()
+        prediction_test = self.rescale_eta(prediction_test)
+        measures_test = self.rescale_eta(y_test.values, y_test.index).squeeze()
         # Compute scores on rescaled values
         r2 = r2_score(measures_test, prediction_test)
         rmse = mean_squared_error(measures_test, prediction_test, squared=False)
@@ -160,25 +160,14 @@ class ModelTrainer:
         return r2, rmse
 
     def save_model(self):
-        dump(self.best_model, ROOT_DIR / "models" / f"{self.model_name}.joblib")
+        dump(self.best_model, self.output_file / f"{self.model_name}.joblib")
         return None
 
-    def log_run(self, model, size, scores):
-        logging.info(model)
-        logging.info(f"Scores Mean: {scores.mean():.4f}")
-        logging.info(f"Score Variance: {scores.var():.4f}")
-        return None
-
-    def log_model_scores(self):
-        scores = pd.DataFrame(self.scores, columns=["Test R2", "Test RMSE"])
-        scores.to_csv(ROOT_DIR / f"logs/ETa_{self.model_name}_k_scores.csv")
-        return None
-
-    def rescale_series(self, eta, index=None):
+    def rescale_eta(self, eta, index=None):
         # Create fake DataFrame with fake features
         X = pd.DataFrame(columns=self.features)
         X["ETa"] = eta
-        scaler = load(ROOT_DIR / "models" / "scaler.joblib")
+        scaler = load(self.input_folder / "scaler.joblib")
         rescaled_eta = scaler.inverse_transform(X)[:, [-1]].ravel()
         if index is not None:
             # Create a DataFrame
