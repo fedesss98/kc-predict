@@ -148,13 +148,13 @@ def scale_data(df, scaler, scaler_file=ROOT_DIR / "models" / "scaler.joblib"):
     return scaled_data
 
 
-def main(input, output, scaler, folds, k_seed, features=None, visualize=True, root_folder=ROOT_DIR):
+def main(input_path, output_path, scaler, folds, k_seed, features=None, visualize=True, root_folder=ROOT_DIR):
     logging.info(f'\n\n{"-"*5} PREPROCESSING {"-"*5}\n\n')
 
     if not isinstance(root_folder, Path):
         root_folder = Path(root_folder)
-    input_file = root_folder / input / "data.pickle"
-    output_folder = root_folder / output
+    input_file = root_folder / input_path / "data.pickle"
+    output_folder = root_folder / output_path
 
 
     # Load and preprocess data
