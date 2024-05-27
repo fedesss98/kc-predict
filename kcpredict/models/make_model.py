@@ -37,7 +37,7 @@ class ModelTrainer:
 
         self.root_folder = Path(root_folder)
         self.input_folder = root_folder / input
-        self.output_file = root_folder / output / "predicted.pickle"
+        self.output_folder = root_folder / output
 
         self.features = features
         self.model = model
@@ -59,7 +59,7 @@ class ModelTrainer:
             self.scores[fold] = self.test_model(trained_model, fold)
 
         # Save scores to file
-        np.savetxt(self.output_file / f"{self.model_name}_scores.csv", self.scores, delimiter=";")
+        np.savetxt(self.output_folder / f"{self.model_name}_scores.csv", self.scores, delimiter=";")
 
         logging.info(f"R2 Scores Mean: {self.scores.mean(axis=0)[0]:.2f}")
         logging.info(f"R2 Scores Max: {self.scores.max(axis=0)[0]:.2f}")
@@ -100,7 +100,7 @@ class ModelTrainer:
         return r2, rmse
 
     def save_model(self):
-        dump(self.best_model, self.output_file / f"{self.model_name}.joblib")
+        dump(self.best_model, self.output_folder / f"{self.model_name}.joblib")
         return None
 
     def rescale_eta(self, eta, index=None):
