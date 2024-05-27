@@ -14,19 +14,22 @@ features = ["DOY", "Tmin", "Tmax", "Tdew", "Uwind", "Vwind", "Rs"]
 scaler = "MinMax"
 folds = 4
 k_seed = 241
+visualize = false
 
 [models.rf]
 n_estimators = 1000
 random_state = 42
 
-[models.mlp]
-hidden_layer_sizes = [100, 100, 100]
-max_iter = 1000
-random_state = 32652
+# [models.mlp]
+# hidden_layer_sizes = [100, 100, 100]
+# max_iter = 1000
+# random_state = 32652
 
-[models.knn]
-n_neighbors = 7
-weights = "distance"
+# [models.knn]
+# n_neighbors = 7
+# weights = "distance"
 
 [prediction]
 input = "data\\preprocessed"
+output = "data\\predictions"
+visualize = true

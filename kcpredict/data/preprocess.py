@@ -156,14 +156,17 @@ def main(input, output, scaler, folds, k_seed, features=None, visualize=True, ro
     input_file = root_folder / input / "data.pickle"
     output_folder = root_folder / output
 
+
     # Load and preprocess data
     data = get_data(input_file)
     df = make_dataframe(data, features)
-    scaler = make_scaler(scaler)
+
+    scaler_name = scaler
+    scaler = make_scaler(scaler_name)
 
     # Visualize data
     if visualize:
-        df.plot(subplots=True, figsize=(10, 16))
+        df.plot(subplots=True, figsize=(10, 16), title="Raw data")
         plt.show()
 
     # Impute missing values
@@ -171,10 +174,6 @@ def main(input, output, scaler, folds, k_seed, features=None, visualize=True, ro
 
     # Save and visualize imputed data
     make_pickle(df, output_folder / "imputed.pickle")
-    if visualize:
-        df.plot(subplots=True, figsize=(10, 16))
-        plt.savefig(root_folder / "visualization/" / f"processed_{scaler}.png")
-        plt.show()
 
     # Save data to predict
     predict = df.loc[~df.index.isin(df.dropna().index), features]
@@ -202,6 +201,12 @@ def main(input, output, scaler, folds, k_seed, features=None, visualize=True, ro
     # Scale and save final data
     df = scale_data(df, scaler, output_folder / "scaler.joblib")
     make_pickle(df, output_folder / "preprocessed.pickle")
+
+    # Visualize processed data
+    if visualize:
+        df.plot(subplots=True, figsize=(10, 16), title="Imputed and Scaled data")
+        plt.savefig(root_folder / "visualization/" / f"processed_{scaler_name}.png")
+        plt.show()
 
     logging.info(f'\n\n{"/"*30}')
 

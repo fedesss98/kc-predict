@@ -84,7 +84,7 @@ def main(input_file, output, visualize=True, root_folder=ROOT_DIR):
 
     # Optionally visualize the data
     if visualize:
-        data.plot(subplots=True, figsize=(10, 16))
+        data.plot(subplots=True, figsize=(10, 16), title="Raw Data")
         savepath = root_folder / "visualization/raw_data.png"
         if savepath.exists():
             plt.savefig(root_folder / "visualization" / "raw_data.png")
