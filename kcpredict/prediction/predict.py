@@ -29,14 +29,13 @@ def ask_for_model():
     return str(model_name)
 
 
-def load_model(model_name):
-    if model_name is None:
-        model_name = ask_for_model()
-    return joblib.load(ROOT_DIR / "models" / f"{model_name}")
+def load_model(model_path):
+    if model_path is None:
+        model_path = ask_for_model()
+    return joblib.load(model_path)
 
 
-def fill_eta(eta):
-    measured = pd.read_pickle(ROOT_DIR / "data/processed" / "processed.pickle")
+def fill_eta(eta, measured):
     eta = pd.concat([eta, measured["ETa"]], axis=1)
     eta.rename(columns={"ETa": "ETa Measured"}, inplace=True)
     idx_predict = eta["ETa Predicted"].dropna().index
@@ -49,11 +48,10 @@ def fill_eta(eta):
     return total_eta
 
 
-def rescale_eta(eta, index=None):
+def rescale_eta(eta, scaler, input_folder, index=None):
     # Create fake DataFrame with fake features
-    df = pd.read_pickle(ROOT_DIR / "data/processed" / "processed.pickle")
+    df = pd.read_pickle(input_folder / "processed.pickle")
     df["ETa"] = eta["ETa"]
-    scaler = joblib.load(ROOT_DIR / "models" / "scaler.joblib")
     rescaled_eta = scaler.inverse_transform(df)[:, [-1]].ravel()
     if index is not None:
         # Create a DataFrame
@@ -62,8 +60,8 @@ def rescale_eta(eta, index=None):
     return rescaled_eta
 
 
-def find_eto():
-    raw_data_path = ROOT_DIR / "data/raw"
+def find_eto(root_folder=ROOT_DIR):
+    raw_data_path = root_folder / "data/raw"
     if (raw_data_path / "data.pickle").exists():
         eto = pd.read_pickle(raw_data_path / "data.pickle")["ETo"]
     elif (raw_data_path / "data.csv").exists():
@@ -81,16 +79,15 @@ def find_eto():
     return eto
 
 
-def make_eto(eta_index):
-    from pathlib import Path
-
-    # explicitly require this experimental feature
+def make_eto(eta_index, root_folder):
+    """Impute missing ETo values using Iterative Imputer."""
+    # Explicitly require this experimental feature
     from sklearn.experimental import enable_iterative_imputer  # noqa
 
     # now you can import normally from sklearn.impute
     from sklearn.impute import IterativeImputer
 
-    eto = find_eto()
+    eto = find_eto(root_folder)
     eto.index = eta_index
     # Impute missing features
     imputer = IterativeImputer(random_state=0)
@@ -98,18 +95,17 @@ def make_eto(eta_index):
     return eto
 
 
-def rescale_series(eta):
+def rescale_series(eta, scaler, input_folder, eto=None):
     # Reset original DataFrame with feature measures and predicted target
-    df = pd.read_pickle(ROOT_DIR / "data/processed" / "processed.pickle")
+    df = pd.read_pickle(input_folder / "preprocessed.pickle")
     df["ETa"] = eta["ETa"]
-    scaler = joblib.load(ROOT_DIR / "models" / "scaler.joblib")
     rescaled_df = scaler.inverse_transform(df)
     df = pd.DataFrame(rescaled_df, columns=df.columns, index=df.index)
     eta["ETa"] = df["ETa"].to_frame()
     try:
         eto = df["ETo"].to_frame()
     except KeyError:
-        eto = make_eto(eta.index)
+        eto = eto
     return eta, eto
 
 
@@ -122,7 +118,7 @@ def plot_prediction(df, series_name, title=None):
         aspect=1.4,
     )
     if title is not None:
-        g.fig.suptitle(title)
+        g.figure.suptitle(title)
     plt.show()
     return None
 
@@ -141,8 +137,8 @@ def plot_linear(model, measures, features):
     return None
 
 
-def compute_kc(eta):
-    eta, eto = rescale_series(eta)
+def compute_kc(eta, eto):
+    """Compute Kc as ETa / ETo"""
     kc = pd.DataFrame()
     kc["Kc"] = eta["ETa"] / eto["ETo"]
     kc["Source"] = eta["Source"]
@@ -150,19 +146,30 @@ def compute_kc(eta):
 
 
 def main(
-    model, output=None, features=None, visualize=True, scaled=True, eta_output=None
+    model_name, input=None, output=None, root_folder = ROOT_DIR,
+    features=None, visualize=True, scaled=True, 
 ):
     logging.info(f"\n{'-'*7} PREDICT ETa {'-'*7}\n\n")
+
+    if not isinstance(root_folder, Path):
+        root_folder = Path(root_folder)
+    input_folder = root_folder / input 
+    output_folder = root_folder / output
+
     # Features to predict ETa
-    X = pd.read_pickle(ROOT_DIR / "data/processed" / "predict.pickle")
+    X = pd.read_pickle(input_folder / "predict.pickle")
     if features is not None:
         X = X.loc[:, features]
     else:
         features = X.columns.tolist()
-    measures = pd.read_pickle(ROOT_DIR / "data/processed" / "processed.pickle").dropna()
-    # Predict ETa
+    measures = pd.read_pickle(input_folder / "preprocessed.pickle").dropna()
+
+    # Scaler to rescale ETa
+    scaler = joblib.load(root_folder / "models" / "scaler.joblib")
+    
+    # PREDICT ETA
     try:
-        model = load_model(model)
+        model = load_model(root_folder / "models" / f"{model_name}.joblib")
         logging.info(f"Predicting from features:\n" f"{X.columns.tolist()}")
         eta_predicted = model.predict(X)
         # Make a DataFrame of predictions
@@ -170,30 +177,32 @@ def main(
     except FileNotFoundError:
         logging.error("Error finding the model. Remember to include file extension.")
     # Make ETa DataFrame with measures and predictions
-    eta = fill_eta(eta)
-    eta_rescaled = pd.DataFrame(columns=["ETa", "Source"])
+    eta = fill_eta(eta, measures)
+    eta_rescaled = rescale_eta(eta, scaler, input_folder, index=eta.index)
     if visualize:
         if scaled:
             plot_prediction(eta, "ETa", "Measured and Predicted ETa (scaled)")
         else:
-            eta_rescaled = rescale_eta(eta, index=eta.index)
             plot_prediction(eta_rescaled, "ETa", "Measured and Predicted ETa")
         plot_linear(model, measures, features)
-    if eta_output is not None:
-        # Save ETa
-        if scaled:
-            pd.to_pickle(eta, eta_output)
-        else:
-            pd.to_pickle(eta_rescaled, eta_output)
-        logging.info(f"Predictions saved in:\n{eta_output}")
-    elif output is not None:
-        # Compute Kc as ETa / ETo
-        kc = compute_kc(eta)
-        if visualize:
-            plot_prediction(kc, "Kc", "Measured and Predicted Kc")
-        # Save Kc
-        pd.to_pickle(kc, output)
-        logging.info(f"Predictions saved in:\n{output}")
+    # Save ETa
+    if scaled:
+        pd.to_pickle(eta, output_folder / "eta_predicted.pickle")
+    else:
+        pd.to_pickle(eta_rescaled, output_folder / "eta_predicted.pickle")
+    logging.info(f"Predictions saved in:\n{output_folder / 'eta_predicted.pickle'}")
+
+    # COMPUTE Kc AS ETa / ETo
+    if "ETo" not in features:
+        eto = make_eto(eta.index)
+    eta, eto = rescale_series(eta, scaler, input_folder)
+    kc = compute_kc(eta, eto)
+
+    if visualize:
+        plot_prediction(kc, "Kc", "Measured and Predicted Kc")
+    # Save Kc
+    pd.to_pickle(kc, output)
+    logging.info(f"Predictions saved in:\n{output}")
     logging.info(f'\n\n{"/"*30}\n\n')
     return kc if output is not None else None
 

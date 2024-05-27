@@ -115,8 +115,10 @@ class KcPredictor:
         self._models = {}
         self.models = self.config["models"]
 
-        # Predict Kc
-        self.predict()
+        # Train and save the best models on a KFold cross-validation
+        self.make_model()
+
+        self.predict_eta()
 
         print("END")
 
@@ -193,7 +195,7 @@ class KcPredictor:
             self._models[model_name] = models_map[model_name](**model_config)
         return self._models
 
-    def predict(self):
+    def make_model(self):
         for model_name, model in self.models.items():
             model_kwargs = dict(
                 model=model, model_name=model_name, features=self.features, 
@@ -202,6 +204,11 @@ class KcPredictor:
             # Train the model on each fold and save the best-performing one
             trainer = ModelTrainer(**model_kwargs)
             trainer.train_on_folds()
+
+    def predict_eta(self):
+        # predict(model=f"{model_name_to_save}.joblib", **PREDICTION_PARAMETERS)
+        for model_name in self.models.keys():
+            predict(model_name, features=self.features, **self.config["prediction"])
 
 
 
