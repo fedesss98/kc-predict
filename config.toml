@@ -12,7 +12,7 @@ input = "data\\"
 output = "data\\preprocessed"
 features = ["DOY", "Tmin", "Tmax", "Tdew", "Uwind", "Vwind", "Rs"]
 scaler = "MinMax"
-folds = 4
+folds = 2
 k_seed = 241
 visualize = false
 

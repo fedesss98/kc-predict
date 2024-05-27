@@ -50,7 +50,7 @@ def fill_eta(eta, measured):
 
 def rescale_eta(eta, scaler, input_folder, index=None):
     # Create fake DataFrame with fake features
-    df = pd.read_pickle(input_folder / "processed.pickle")
+    df = pd.read_pickle(input_folder / "preprocessed.pickle")
     df["ETa"] = eta["ETa"]
     rescaled_eta = scaler.inverse_transform(df)[:, [-1]].ravel()
     if index is not None:
@@ -194,7 +194,7 @@ def main(
 
     # COMPUTE Kc AS ETa / ETo
     if "ETo" not in features:
-        eto = make_eto(eta.index)
+        eto = make_eto(eta.index, root_folder)
     eta, eto = rescale_series(eta, scaler, input_folder)
     kc = compute_kc(eta, eto)
 

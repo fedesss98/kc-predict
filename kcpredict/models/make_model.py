@@ -100,14 +100,14 @@ class ModelTrainer:
         return r2, rmse
 
     def save_model(self):
-        dump(self.best_model, self.output_folder / f"{self.model_name}.joblib")
+        dump(self.best_model, self.root_folder / f"models/{self.model_name}.joblib")
         return None
 
     def rescale_eta(self, eta, index=None):
         # Create fake DataFrame with fake features
         X = pd.DataFrame(columns=self.features)
         X["ETa"] = eta
-        scaler = load(self.input_folder / "scaler.joblib")
+        scaler = load(self.root_folder / "models/scaler.joblib")
         rescaled_eta = scaler.inverse_transform(X)[:, [-1]].ravel()
         if index is not None:
             # Create a DataFrame
