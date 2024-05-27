@@ -53,12 +53,12 @@ def make_pickle(df, out):
         print("Something went wrong writing Pickle file.\nTry again")
 
 
-def main(input_file, output, visualize=True, root_folder=ROOT_DIR):
+def main(input_file, output_path, visualize=True, root_folder=ROOT_DIR):
     """
     Load raw data from input file, save it to output file, and optionally visualize it.
 
     :param input_file: Path to input file containing raw data
-    :param output: Path to output file where data will be saved
+    :param output_path: Path to output file where data will be saved
     :param visualize: Whether to visualize the data (default: True)
     """
     logging.info(f'\n\n{"-"*5} MAKE DATA {"-"*5}\n\n')
@@ -66,7 +66,7 @@ def main(input_file, output, visualize=True, root_folder=ROOT_DIR):
     if not isinstance(root_folder, Path):
         root_folder = Path(root_folder)
     input_file = root_folder / input_file
-    output_file = root_folder / output / "data.pickle"
+    output_file = root_folder / output_path / "data.pickle"
 
     # Load raw data from input file
     data = get_raw_data(input_file)

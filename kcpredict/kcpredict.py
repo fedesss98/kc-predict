@@ -29,53 +29,6 @@ from pathlib import Path
 
 ROOT_DIR = Path(__file__).parent.parent
 
-
-FEATURES = {"2024_variouscrop":
-                [
-                    "DOY", "Tmin", "Tmax", "Tdew", "Uwind", "Vwind", "Rs",
-                    # "ETo"
-                ]
-            }
-
-
-MAKE_DATA_PARAMETERS = {
-    "input_file": "G:/UNIPA/DOTTORATO/MACHINE_LEARNING/crop_coefficient/kc-predict/data/raw/data_us_arm.csv",
-    "output_file": ROOT_DIR / "data/interim/data.pickle",
-    "visualize": True,
-}
-
-PREPROCESS_PARAMETERS = {
-    "input_file": ROOT_DIR / "data/interim/data.pickle",
-    "scaler": "MinMax",
-    "folds": 5,
-    "k_seed": 24,  # 24
-    "output_file": ROOT_DIR / "data/processed/processed.pickle",
-    "visualize": False,
-}
-
-MODELS = {
-    "rf": RandomForestRegressor(
-        n_estimators=1000,
-        max_depth=None,
-        random_state=42,
-        ccp_alpha=0.0,
-    ),
-    "mlp": MLPRegressor(
-        hidden_layer_sizes=(100, 100, 100),
-        max_iter=1000,
-        random_state=32652,  # 32652
-    ),
-    "knn": KNeighborsRegressor(
-        n_neighbors=7,
-        weights="distance",
-    ),
-}
-
-PREDICTION_PARAMETERS = {
-    "output": ROOT_DIR / "data/predicted" / "predicted.pickle",
-    "visualize": True,
-}
-
 POSTPROCESS_PARAMETERS = {
     "contamination": 0.1,
     "seed": 42,
@@ -122,7 +75,6 @@ class KcPredictor:
 
         print("END")
 
-
     def setup_project(self):
         """
         Set the project directory where all the data will be saved.
@@ -149,20 +101,23 @@ class KcPredictor:
 
         # Check if the raw data file is not already in the project directory
         if not os.path.isfile(project_dir / raw_data_file):
-            # Then check if the raw data file is in the root directory
-            if os.path.isfile(self.root / raw_data_file):
-                # First check if destination directory exists
-                if not os.path.isdir(project_dir / raw_data_file.parent):
-                    os.makedirs(project_dir / raw_data_file.parent)
-                    logging.info(f"Created data folder: {project_dir / raw_data_file.parent}")
-                # Copy the raw data file to the project directory
-                shutil.copy(self.root / raw_data_file, project_dir / raw_data_file)
-                logging.info(f"Copied raw data file to project directory: {project_dir}")
-            else:
-                raise FileNotFoundError(f"Raw data file not found in project directory or root directory")
-        
+            if not os.path.isfile(self.root / raw_data_file):
+                raise FileNotFoundError(
+                    "Raw data file not found in project directory or root directory"
+                )
+
+            # First check if destination directory exists
+            if not os.path.isdir(project_dir / raw_data_file.parent):
+                os.makedirs(project_dir / raw_data_file.parent)
+                logging.info(f"Created data folder: {project_dir / raw_data_file.parent}")
+            # Copy the raw data file to the project directory
+            shutil.copy(self.root / raw_data_file, project_dir / raw_data_file)
+            logging.info(f"Copied raw data file to project directory: {project_dir}")
         # Copy the configuration file to the project directory
-        shutil.copy(self.root / "config.toml", project_dir / "config.toml")
+        try:
+            shutil.copy(self.root / "config.toml", project_dir / "config.toml")
+        except shutil.SameFileError:
+            logging.warning("Configuration file already in project directory")
 
         # Create a visualization folder if it does not exist
         visualization_dir = project_dir / "visualization"

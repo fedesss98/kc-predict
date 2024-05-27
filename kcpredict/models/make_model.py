@@ -32,12 +32,12 @@ ROOT_DIR = Path(__file__).parent.parent.parent
 
 
 class ModelTrainer:
-    def __init__(self, model, model_name, features, input, output, root_folder=ROOT_DIR, **kwargs):
+    def __init__(self, model, model_name, features, input_path, output_path, root_folder=ROOT_DIR, **kwargs):
         logging.info(f'\n\n{"-"*7} {model_name.upper()} MODEL TRAINING {"-"*7}\n\n')
 
         self.root_folder = Path(root_folder)
-        self.input_folder = root_folder / input
-        self.output_folder = root_folder / output
+        self.input_folder = root_folder / input_path
+        self.output_folder = root_folder / output_path
 
         self.features = features
         self.model = model

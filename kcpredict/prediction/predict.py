@@ -146,15 +146,15 @@ def compute_kc(eta, eto):
 
 
 def main(
-    model_name, input=None, output=None, root_folder = ROOT_DIR,
+    model_name, input_path=None, output_path=None, root_folder = ROOT_DIR,
     features=None, visualize=True, scaled=True, 
 ):
     logging.info(f"\n{'-'*7} PREDICT ETa {'-'*7}\n\n")
 
     if not isinstance(root_folder, Path):
         root_folder = Path(root_folder)
-    input_folder = root_folder / input 
-    output_folder = root_folder / output
+    input_folder = root_folder / input_path
+    output_folder = root_folder / output_path
 
     # Features to predict ETa
     X = pd.read_pickle(input_folder / "predict.pickle")
@@ -201,10 +201,10 @@ def main(
     if visualize:
         plot_prediction(kc, "Kc", "Measured and Predicted Kc")
     # Save Kc
-    pd.to_pickle(kc, output)
-    logging.info(f"Predictions saved in:\n{output}")
+    pd.to_pickle(kc, output_folder)
+    logging.info(f"Predictions saved in:\n{output_folder}")
     logging.info(f'\n\n{"/"*30}\n\n')
-    return kc if output is not None else None
+    return kc
 
 
 if __name__ == "__main__":
