@@ -3,7 +3,7 @@
 # the raw data extracted in make-data are saved in an output folder named "data\\raw"
 # as when creating kc series the ETo is searched automatically in that folder
 id = 1
-project_dir = "G:\\UNIPA\\DOTTORATO\\MACHINE_LEARNING\\crop_coefficient\\kc-predict\\us_arm_fede"
+project_dir = "G:\\UNIPA\\DOTTORATO\\MACHINE_LEARNING\\crop_coefficient\\kc-predict\\data\\us_arm_fede"
 
 [make-data]
 input_file = "data\\raw\\data_us_arm.csv"
@@ -35,4 +35,12 @@ random_state = 42
 [prediction]
 input_path = "data\\preprocessed"
 output_path = "data\\predictions"
-visualize = true
+visualize = false
+
+[postprocess]
+input_path = "data\\predictions"
+output_path = "data\\postprocessed"
+trapezoidal_path = "C:\\Users\\fedes\\OneDrive - UNIPA\\Crop_Coefficient\\Dataset\\trapezoidal_us_arm.csv"
+contamination = 0.01
+seed = 42
+visualize = false

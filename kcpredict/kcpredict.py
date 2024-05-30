@@ -49,9 +49,9 @@ class KcPredictor:
 
         # Save or create project directory
         self.project_dir = self.setup_project()
-        
+
         # Add the root folder to the configuration
-        for key in ["make-data", "preprocess", "prediction"]:
+        for key in ["make-data", "preprocess", "prediction", "postprocess"]:
             try:
                 self.config[key]["root_folder"] = self.project_dir
             except KeyError:
@@ -60,7 +60,7 @@ class KcPredictor:
         # Read and Preprocess data
         make_data(**self.config["make-data"])
         preprocess_data(**self.config["preprocess"])
-        
+
         # Save features to be used
         self.features = self.config["preprocess"]["features"]
 
@@ -70,8 +70,11 @@ class KcPredictor:
 
         # Train and save the best models on a KFold cross-validation
         self.make_model()
-
+        #Predict ETa using the best models and make the Kc series
         self.predict_eta()
+
+        # Postprocess the predictions
+        kc_postprocessed = polish(**self.config["postprocess"])
 
         print("END")
 
@@ -92,9 +95,9 @@ class KcPredictor:
         raw_data_file = Path(self.config["make-data"]["input_file"])
 
         # Check if all needed directories exist, otherwise create them
-        for key in ["make-data", "preprocess", "prediction"]:
-            if self.config[key].get("output", None):
-                output_dir = project_dir / Path(self.config[key]["output"])
+        for key in ["make-data", "preprocess", "prediction", "postprocess"]:
+            if self.config[key].get("output_path", None):
+                output_dir = project_dir / Path(self.config[key]["output_path"])
                 if not os.path.isdir(output_dir):
                     os.makedirs(output_dir)
                     logging.info(f"Created output folder: {output_dir}")
@@ -131,6 +134,17 @@ class KcPredictor:
             os.makedirs(models_dir)
             logging.info(f"Created models folder: {models_dir}")
 
+        # Create an external data folder if the trapezoidal file is given
+        if self.config["postprocess"].get("trapezoidal_file", None):
+            external_data_dir = project_dir / "data" / "external"
+            if not os.path.isdir(external_data_dir):
+                os.makedirs(external_data_dir)
+                logging.info(f"Created external data folder: {external_data_dir}")
+            # Copy the trapezoidal file to the external data folder
+            trapezoidal_file = Path(self.config["postprocess"]["trapezoidal_file"])
+            shutil.copy(trapezoidal_file, external_data_dir / trapezoidal_file.name)
+            logging.info(f"Copied trapezoidal file to external data folder: {external_data_dir}")
+
 
         return project_dir
 
@@ -153,7 +167,7 @@ class KcPredictor:
     def make_model(self):
         for model_name, model in self.models.items():
             model_kwargs = dict(
-                model=model, model_name=model_name, features=self.features, 
+                model=model, model_name=model_name, features=self.features,
                 **self.config["prediction"]
             )
             # Train the model on each fold and save the best-performing one
