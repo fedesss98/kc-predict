@@ -156,7 +156,6 @@ def main(input_path, output_path, scaler, folds, k_seed, features=None, visualiz
     input_file = root_folder / input_path / "data.pickle"
     output_folder = root_folder / output_path
 
-
     # Load and preprocess data
     data = get_data(input_file)
     df = make_dataframe(data, features)

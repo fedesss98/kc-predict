@@ -49,8 +49,8 @@ def get_raw_data(fname):  # sourcery skip: use-contextlib-suppress
 def make_pickle(df, out):
     try:
         df.to_pickle(out)
-    except Exception:
-        print("Something went wrong writing Pickle file.\nTry again")
+    except Exception as e:
+        print(f"Something went wrong writing Pickle file: {e}.\nTry again")
 
 
 def main(input_file, output_path, visualize=True, root_folder=ROOT_DIR):
