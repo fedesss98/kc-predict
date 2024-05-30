@@ -95,17 +95,16 @@ def make_eto(eta_index, root_folder):
     return eto
 
 
-def rescale_series(eta, scaler, input_folder, eto=None):
+def rescale_series(eta, scaler, input_folder):
     # Reset original DataFrame with feature measures and predicted target
     df = pd.read_pickle(input_folder / "preprocessed.pickle")
     df["ETa"] = eta["ETa"]
     rescaled_df = scaler.inverse_transform(df)
     df = pd.DataFrame(rescaled_df, columns=df.columns, index=df.index)
     eta["ETa"] = df["ETa"].to_frame()
-    try:
-        eto = df["ETo"].to_frame()
-    except KeyError:
-        eto = eto
+    if "ETo" not in df.columns:
+        return eta
+    eto = df["ETo"].to_frame()
     return eta, eto
 
 
@@ -195,13 +194,15 @@ def main(
     # COMPUTE Kc AS ETa / ETo
     if "ETo" not in features:
         eto = make_eto(eta.index, root_folder)
-    eta, eto = rescale_series(eta, scaler, input_folder)
+        eta = rescale_series(eta, scaler, input_folder)
+    else:
+        eta, eto = rescale_series(eta, scaler, input_folder)
     kc = compute_kc(eta, eto)
 
     if visualize:
         plot_prediction(kc, "Kc", "Measured and Predicted Kc")
     # Save Kc
-    pd.to_pickle(kc, output_folder)
+    pd.to_pickle(kc, output_folder / "kc_predicted.pickle")
     logging.info(f"Predictions saved in:\n{output_folder}")
     logging.info(f'\n\n{"/"*30}\n\n')
     return kc
