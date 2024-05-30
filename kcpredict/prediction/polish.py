@@ -55,9 +55,9 @@ def remove_noise(df):
     return df_denoised
 
 
-def swc_filter(df):
+def swc_filter(df, root_folder=ROOT_DIR / "data/interim"):
     try:
-        swc = pd.read_pickle(ROOT_DIR / "data/interim" / "data.pickle")["SWC"]
+        swc = pd.read_pickle(root_folder / "data/raw/data.pickle")["SWC"]
         return df.loc[swc > 0.21]
     except KeyError:
         logging.warning("SWC not present in data, cannot use it as filter")
@@ -72,26 +72,31 @@ def rolling_analysis(df):
     return df_rolling
 
 
-def get_trapezoidal():
-    return pd.read_csv(
-        ROOT_DIR / "data/external" / "trapezoidal_kc.csv",
-        sep=";",
-        decimal=",",
-        index_col=0,
-        parse_dates=True,
-        infer_datetime_format=True,
-        dayfirst=True,
-        skiprows=[0],
-    )
+def get_trapezoidal(root_folder=ROOT_DIR / "data/external"):
+    try:
+        df = pd.read_csv(
+            root_folder / "data/external/trapezoidal_kc.csv",
+            sep=";",
+            decimal=",",
+            index_col=0,
+            parse_dates=True,
+            infer_datetime_format=True,
+            dayfirst=True,
+            skiprows=[0],
+        )
+    except FileNotFoundError:
+        logging.warning("Trapezoidal file not found")
+        return pd.DataFrame()
+    return df
 
 
-def save_data(df, filename):
-    df.to_csv(ROOT_DIR / "data/predicted" / f"{filename}.csv")
-    df.to_pickle(ROOT_DIR / "data/predicted" / f"{filename}.pickle")
+def save_data(df, output_folder, filename):
+    df.to_csv(output_folder / f"{filename}.csv")
+    df.to_pickle(output_folder / f"{filename}.pickle")
     return None
 
 
-def make_trapezoidal(df):
+def make_trapezoidal(df, output_folder=ROOT_DIR / "data/predicted"):
     """
     Mid Season: 1Mag - 31Ago
     Final Season: 1Nov - 31Dec
@@ -119,8 +124,8 @@ def make_trapezoidal(df):
     df["std"] = df["season"].map(std.to_dict()['Kc'])
 
     trpz = df.loc[:, ["trapezoidal", "std"]]
-    trpz.to_pickle(ROOT_DIR / "data/predicted" / "trapezoidal.pickle")
-    trpz.to_csv(ROOT_DIR / "data/predicted" / "trapezoidal.csv")
+    trpz.to_pickle(output_folder / "trapezoidal.pickle")
+    trpz.to_csv(output_folder / "trapezoidal.csv")
     return trpz
 
 
@@ -191,9 +196,18 @@ def make_plot(*frames, trapezoidal=True, measures=True, sma=False, predictions=T
 
 
 # %%
-def main(outfile, visualize, contamination=0.01, seed=352):
+def main(
+        input_path, output_path, root_folder, visualize, trapezoidal_path=None,
+         contamination=0.01, seed=352
+):
     logging.info(f'{"-"*5} POLISH KC {"-"*5}')
-    kc = pd.read_pickle(ROOT_DIR / "data/predicted" / "predicted.pickle")
+
+    if not isinstance(root_folder, Path):
+        root_folder = Path(root_folder)
+    input_folder = root_folder / input_path
+    output_folder = root_folder / output_path
+
+    kc = pd.read_pickle(input_folder / "kc_predicted.pickle")
 
     # Outlier removal
     detector = IsolationForest(contamination=contamination, random_state=seed)
@@ -203,7 +217,7 @@ def main(outfile, visualize, contamination=0.01, seed=352):
     # SWC filter: take data with SWC > 0.21
     kc_filtered = swc_filter(kc_denoised)
 
-    save_data(kc_filtered, outfile)
+    save_data(kc_filtered, output_folder, "kc_filtered")
 
     if visualize:
         plot_prediction(kc, "Kc", title="Raw Predicted Kc")
@@ -211,7 +225,7 @@ def main(outfile, visualize, contamination=0.01, seed=352):
         plot_prediction(kc_denoised, "Kc", title="Noise Removed")
         plot_prediction(kc_filtered, "Kc", title="Filtered by SWC")
 
-    kc_trapezoidal = make_trapezoidal(kc_filtered.copy())
+    kc_trapezoidal = make_trapezoidal(kc_filtered.copy(), trapezoidal_path, output_folder)
 
     make_plot(kc_filtered, predictions=False)
     make_plot(kc_filtered, kc_trapezoidal)
