@@ -225,7 +225,7 @@ def main(
         plot_prediction(kc_denoised, "Kc", title="Noise Removed")
         plot_prediction(kc_filtered, "Kc", title="Filtered by SWC")
 
-    kc_trapezoidal = make_trapezoidal(kc_filtered.copy(), trapezoidal_path, output_folder)
+    kc_trapezoidal = make_trapezoidal(kc_filtered.copy(), output_folder)
 
     make_plot(kc_filtered, predictions=False)
     make_plot(kc_filtered, kc_trapezoidal)
