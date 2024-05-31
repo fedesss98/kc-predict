@@ -40,11 +40,11 @@ and pull changes in the current local `better-interface` branch,
 git pull origin better-interface
 ```
 \
-You will need Python along with different libraries to run this code: the easiest way is to setup or update a Conda Environment using the file `environment.yml`.
+You will need Python along with different libraries to run this code: the easiest way is to set up or update a Conda Environment using the file `environment.yml`.
 ```
 $conda env create --file environment.yml
 ```
-By default the environment is named `ml`, but you can change it in the `environment.yml` file.
+By default, the environment is named `ml`, but you can change it in the `environment.yml` file.
 Activate the environment with
 ```
 $conda activate ml
@@ -67,7 +67,7 @@ This is not to be confused with the **Root Folder** which is the place where all
 
 **Project Directory** should be an absolute path like
 ```C:\users\fedesss\kcpredict\my-new-run```. 
-The program creates this directory if it does not exists, along with all other directories specified in the configuration file. Moreover, a copy of the configuration file is pasted in this folder. Also, data are copied from their location to this Project Directory.
+The program creates this directory if it does not exist, along with all other directories specified in the configuration file. Moreover, a copy of the configuration file is pasted in this folder. Also, data are copied from their location to this Project Directory.
 
 #### Configure Dataset
 To set up the initial creation of the raw dataset, use the tag `[make-data]`. You can set:
