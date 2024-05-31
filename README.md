@@ -28,15 +28,15 @@ git clone https://github.com/fedesss98/kcpredict
 ```
 The created `kc-predict` directory will be your **Root Folder**.
 Now create a new local brach and checkout into it, 
-```githubexpressionlanguage
+```git
 git checkout -b better-interface
 ```
 Then fetch new commits from the remote repository
-```githubexpressionlanguage
+```git
 git fetch
 ```
 and pull changes in the current local `better-interface` branch,
-```githubexpressionlanguage
+```git
 git pull origin better-interface
 ```
 \
@@ -82,7 +82,7 @@ Use the `[preprocess]` tag to set preprocessing options. Here data are scaled an
 - **`input_path`** specify the relative location of the file `data.pickle`;
 - **`output_path`** specify the location of the test dataset and all the training folds;
 - **`features`** lists all the feature names as they appear in the CSV or Excel file;
-- **`scaler`** can be `"Standard` or `MinMax` based on the choice of scaling;
+- **`scaler`** can be `"Standard"` or `"MinMax"` based on the choice of scaling;
 - **`folds`** is the number of equal folds in which data is split
 - **`k_seed`** is the initial seed for the K-folding algorithm
 - **`visualize`** is a flag used to show or not the preprocessed data series.
