@@ -215,7 +215,7 @@ def main(
     # Seasonal decomposition: take seasonal and mean trend and remove noise
     kc_denoised = remove_noise(kc_inlier)
     # SWC filter: take data with SWC > 0.21
-    kc_filtered = swc_filter(kc_denoised)
+    kc_filtered = swc_filter(kc_denoised, root_folder=root_folder)
 
     save_data(kc_filtered, output_folder, "kc_filtered")
 
