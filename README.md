@@ -66,7 +66,7 @@ The **Project Directory** configure the root folder for the run: all paths for i
 This is not to be confused with the **Root Folder** which is the place where all this code lies.
 
 **Project Directory** should be an absolute path like
-```C:\users\fedesss\kcpredict\my-new-run```. 
+`C:\users\fedesss\kcpredict\my-new-run` or a relative path from the Root Directory like `.\my-new-run`. 
 The program creates this directory if it does not exist, along with all other directories specified in the configuration file. Moreover, a copy of the configuration file is pasted in this folder. Also, data are copied from their location to this Project Directory.
 
 #### Configure Dataset
