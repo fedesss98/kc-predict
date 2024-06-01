@@ -96,34 +96,78 @@ def save_data(df, output_folder, filename):
     return None
 
 
-def make_trapezoidal(df, output_folder=ROOT_DIR / "data/predicted"):
-    """
-    Mid Season: 1Mag - 31Ago
-    Final Season: 1Nov - 31Dec
-    Initial Season: 1Gen - 31Mar
-    """
-    # Define the seasons
-    seasons = {
-        "Mid": set(range(5, 9)),  # May to August
-        "Extreme": set(list(range(1, 4)) + [10, 11, 12]),  # October to March
-    }
+def read_allen(path):
+    allen = pd.read_csv(
+        path,
+        sep=";",
+        decimal=",",
+        parse_dates=True,
+        infer_datetime_format=True,
+        dayfirst=True,
+    )
+    try:
+        allen = allen.loc[["Day", "Allen"]]
+    except IndexError as e:
+        raise IndexError(
+            f"Allen Trapezoidal data must contain one column named Allen: {e}"
+        )
 
-    # Function to apply to every day in the index to determine the season
-    def get_season(date):
-        for season, months in seasons.items():
-            if date.month in months:
-                return f'{season}{date.year}'
-        return None
+    return allen
 
-    # Apply the function to the DataFrame
-    df["season"] = df.index.map(get_season)
 
-    trapezoidal = df.groupby("season").mean(numeric_only=True)
-    std = df.groupby("season").std(numeric_only=True)
-    df["trapezoidal"] = df["season"].map(trapezoidal.to_dict()['Kc'])
-    df["std"] = df["season"].map(std.to_dict()['Kc'])
+def extract_season_from_allen(allen):
+    allen = allen.groupby("Allen")
 
-    trpz = df.loc[:, ["trapezoidal", "std"]]
+    max_value = allen["Allen"].max()
+    min_value = allen["Allen"].min()
+
+    print(f"Max: {max_value}, Min: {min_value}")
+
+    allen["Season"] = None
+
+    for name, group in allen:
+        start = group.index[0]
+        end = group.index[-1]
+        if max_value - 1e-2 <= name <= max_value:
+            season = "High"
+            print(f"{season} Kc season from {start} to {end}: {name}")
+        elif min_value <= name <= min_value + 1e-2:
+            season = "Low"
+            print(f"{season} Kc season from {start} to {end}: {name}")
+        else:
+            season = "Mid"
+        allen.loc[group.index, "Season1"] = season
+
+    return allen
+
+
+def make_trapezoidal(kc, allen, output_folder=ROOT_DIR / "data/predicted"):
+    kc = kc.reset_index()
+    # First recognize seasons based on Allen DataFrame
+    allen_seasoned = extract_season_from_allen(allen).reset_index()
+
+    allen_seasoned["month_day"] = allen_seasoned["Day"].dt.strftime("%m-%d")
+    kc["month_day"] = allen_seasoned["Day"].dt.strftime("%m-%d")
+
+    df = pd.merge(kc, allen_seasoned, on="month_day")
+    df = df.sort_values("Day").drop(["month_day", "Date"], axis=1)
+    df["year"] = df["Day"].dt.year
+    df["Kc_trapezoidal"] = np.nan
+    df["Error"] = np.nan
+    groups = df.groupby(["year", "Season1"], group_keys=False)
+
+    def _make_trapezoidal(group):
+        season = group["Season1"].iloc[0]
+        if season != "Mid":
+            group["Kc_trapezoidal"] = group["Kc"].mean()
+            group["Error"] = group["Kc"].std()
+        return group
+
+    trapezoidal_df = groups.apply(_make_trapezoidal)
+    # Fill Mid-season values with linear interpolation
+    mid_values = trapezoidal_df["Kc_trapezoidal"].interpolate(method="linear")
+
+    trpz = trapezoidal_df.loc[:, ["Kc_trapezoidal", "std"]]
     trpz.to_pickle(output_folder / "trapezoidal.pickle")
     trpz.to_csv(output_folder / "trapezoidal.csv")
     return trpz
@@ -140,12 +184,15 @@ def add_plot_trapezoidal(ax, measures=None):
     #     ls=":", c="blue", alpha=0.8, label=trapezoidal.columns[1],
     # )
     if measures is not None:
-        ax.plot(measures["trapezoidal"].dropna(),
-                ls="-.", c="green", label="Computed Trapezoidal", )
+        ax.plot(
+            measures["trapezoidal"].dropna(),
+            ls="-.",
+            c="green",
+            label="Computed Trapezoidal",
+        )
         error_up = measures["trapezoidal"] + measures["std"]
         error_down = measures["trapezoidal"] - measures["std"]
-        ax.fill_between(error_up.index, error_up, error_down,
-                        color="green", alpha=0.2)
+        ax.fill_between(error_up.index, error_up, error_down, color="green", alpha=0.2)
     return ax
 
 
@@ -197,8 +244,13 @@ def make_plot(*frames, trapezoidal=True, measures=True, sma=False, predictions=T
 
 # %%
 def main(
-        input_path, output_path, root_folder, visualize, trapezoidal_path=None,
-         contamination=0.01, seed=352
+    input_path,
+    output_path,
+    root_folder,
+    visualize,
+    trapezoidal_path=None,
+    contamination=0.01,
+    seed=352,
 ):
     logging.info(f'{"-"*5} POLISH KC {"-"*5}')
 
@@ -225,7 +277,9 @@ def main(
         plot_prediction(kc_denoised, "Kc", title="Noise Removed")
         plot_prediction(kc_filtered, "Kc", title="Filtered by SWC")
 
-    kc_trapezoidal = make_trapezoidal(kc_filtered.copy(), output_folder)
+    if trapezoidal_path is not None:
+        allen = read_allen(trapezoidal_path)
+        kc_trapezoidal = make_trapezoidal(kc_filtered.copy(), allen, output_folder)
 
     make_plot(kc_filtered, predictions=False)
     make_plot(kc_filtered, kc_trapezoidal)
@@ -237,5 +291,5 @@ def main(
 
 
 if __name__ == "__main__":
-    output_name = "RF_kc_postprocessed" # Use the model name .upper()
+    output_name = "RF_kc_postprocessed"  # Use the model name .upper()
     main(seed=352, contamination=0.01, visualize=True, outfile=output_name)
