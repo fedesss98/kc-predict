@@ -157,7 +157,7 @@ def make_trapezoidal(kc, allen, output_folder=ROOT_DIR / "data/predicted"):
     groups = df.groupby(["year", "Season1"], group_keys=False)
 
     def _make_trapezoidal(group):
-        season = group["Season1"].iloc[0]
+        season = group["Season"].iloc[0]
         if season != "Mid":
             group["Kc_trapezoidal"] = group["Kc"].mean()
             group["Error"] = group["Kc"].std()
