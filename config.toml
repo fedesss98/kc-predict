@@ -19,6 +19,9 @@ folds = 2
 k_seed = 241
 visualize = false
 
+# List all the models in the format [models.model_name],
+# where model_name can be one of 'rf', 'mlp', 'knn'.
+# List all the arguments required by the respective SciKit model
 [models.rf]
 n_estimators = 1000
 random_state = 42
@@ -40,7 +43,8 @@ visualize = false
 [postprocess]
 input_path = "data\\predictions"
 output_path = "data\\postprocessed"
-trapezoidal_path = "C:\\Users\\fedes\\OneDrive - UNIPA\\Crop_Coefficient\\Dataset\\trapezoidal_us_arm.csv"
+# The Allen Trapezoidal file must have a first column called 'Day' and one 'Allen' column
+trapezoidal_path = "data/external/trapezoidal_us_arm.csv"
 contamination = 0.01
 seed = 42
-visualize = false
+visualize = true

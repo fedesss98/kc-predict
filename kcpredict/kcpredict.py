@@ -17,6 +17,7 @@ from data.preprocess import main as preprocess_data
 from models.make_model import ModelTrainer
 from prediction.predict import main as predict
 from prediction.polish import main as polish
+from prediction.make_trapezoidal import main as make_trapezoidal
 from models.calc_metrics import main as calc_metrics
 
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
@@ -74,7 +75,8 @@ class KcPredictor:
         self.predict_eta()
 
         # Postprocess the predictions
-        kc_postprocessed = polish(**self.config["postprocess"])
+        self.kc_postprocessed = polish(**self.config["postprocess"])
+        self.kc_trapezoidal = make_trapezoidal(**self.config["postprocess"])
 
         print("END")
 
