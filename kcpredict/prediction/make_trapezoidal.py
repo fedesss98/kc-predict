@@ -13,24 +13,6 @@ from pathlib import Path
 ROOT_DIR = Path(__file__).parent.parent.parent
 
 
-def get_trapezoidal(root_folder=ROOT_DIR / "data/external"):
-    try:
-        df = pd.read_csv(
-            root_folder / "data/external/trapezoidal_kc.csv",
-            sep=";",
-            decimal=",",
-            index_col=0,
-            parse_dates=True,
-            infer_datetime_format=True,
-            dayfirst=True,
-            skiprows=[0],
-        )
-    except FileNotFoundError:
-        logging.warning("Trapezoidal file not found")
-        return pd.DataFrame()
-    return df
-
-
 def read_allen(path):
     allen = pd.read_csv(
         path,
@@ -62,8 +44,8 @@ def extract_season_from_allen(allen):
     allen["Season"] = None
 
     for name, group in allen_groups:
-        start = allen.loc[group.index[0], 'Day'].dt.strftime("%m-%d")
-        end = allen.loc[group.index[-1], 'Day'].dt.strftime("%m-%d")
+        start = allen.loc[group.index[0], 'Day'].strftime("%d/%m")
+        end = allen.loc[group.index[-1], 'Day'].strftime("%d/%m")
         if max_value - 1e-2 <= name <= max_value:
             season = "High"
             print(f"{season} Kc season from {start} to {end}: {name}")
