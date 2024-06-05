@@ -29,8 +29,6 @@ from sklearn.ensemble import IsolationForest
 
 from statsmodels.tsa.seasonal import seasonal_decompose
 
-import seaborn as sns
-
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).parent.parent.parent
@@ -72,105 +70,12 @@ def rolling_analysis(df):
     return df_rolling
 
 
-def get_trapezoidal(root_folder=ROOT_DIR / "data/external"):
-    try:
-        df = pd.read_csv(
-            root_folder / "data/external/trapezoidal_kc.csv",
-            sep=";",
-            decimal=",",
-            index_col=0,
-            parse_dates=True,
-            infer_datetime_format=True,
-            dayfirst=True,
-            skiprows=[0],
-        )
-    except FileNotFoundError:
-        logging.warning("Trapezoidal file not found")
-        return pd.DataFrame()
-    return df
 
 
 def save_data(df, output_folder, filename):
     df.to_csv(output_folder / f"{filename}.csv")
     df.to_pickle(output_folder / f"{filename}.pickle")
     return None
-
-
-def read_allen(path):
-    allen = pd.read_csv(
-        path,
-        sep=";",
-        decimal=",",
-        parse_dates=True,
-        infer_datetime_format=True,
-        dayfirst=True,
-    )
-    try:
-        allen = allen.loc[["Day", "Allen"]]
-    except IndexError as e:
-        raise IndexError(
-            f"Allen Trapezoidal data must contain one column named Allen: {e}"
-        )
-
-    return allen
-
-
-def extract_season_from_allen(allen):
-    allen = allen.groupby("Allen")
-
-    max_value = allen["Allen"].max()
-    min_value = allen["Allen"].min()
-
-    print(f"Max: {max_value}, Min: {min_value}")
-
-    allen["Season"] = None
-
-    for name, group in allen:
-        start = group.index[0]
-        end = group.index[-1]
-        if max_value - 1e-2 <= name <= max_value:
-            season = "High"
-            print(f"{season} Kc season from {start} to {end}: {name}")
-        elif min_value <= name <= min_value + 1e-2:
-            season = "Low"
-            print(f"{season} Kc season from {start} to {end}: {name}")
-        else:
-            season = "Mid"
-        allen.loc[group.index, "Season1"] = season
-
-    return allen
-
-
-def make_trapezoidal(kc, allen, output_folder=ROOT_DIR / "data/predicted"):
-    kc = kc.reset_index()
-    # First recognize seasons based on Allen DataFrame
-    allen_seasoned = extract_season_from_allen(allen).reset_index()
-
-    allen_seasoned["month_day"] = allen_seasoned["Day"].dt.strftime("%m-%d")
-    kc["month_day"] = allen_seasoned["Day"].dt.strftime("%m-%d")
-
-    df = pd.merge(kc, allen_seasoned, on="month_day")
-    df = df.sort_values("Day").drop(["month_day", "Date"], axis=1)
-    df["year"] = df["Day"].dt.year
-    df["Kc_trapezoidal"] = np.nan
-    df["Error"] = np.nan
-    groups = df.groupby(["year", "Season1"], group_keys=False)
-
-    def _make_trapezoidal(group):
-        season = group["Season"].iloc[0]
-        if season != "Mid":
-            group["Kc_trapezoidal"] = group["Kc"].mean()
-            group["Error"] = group["Kc"].std()
-        return group
-
-    trapezoidal_df = groups.apply(_make_trapezoidal)
-    # Fill Mid-season values with linear interpolation
-    mid_values = trapezoidal_df["Kc_trapezoidal"].interpolate(method="linear")
-
-    trpz = trapezoidal_df.loc[:, ["Kc_trapezoidal", "std"]]
-    trpz.to_pickle(output_folder / "trapezoidal.pickle")
-    trpz.to_csv(output_folder / "trapezoidal.csv")
-    return trpz
 
 
 def add_plot_trapezoidal(ax, measures=None):
@@ -277,12 +182,7 @@ def main(
         plot_prediction(kc_denoised, "Kc", title="Noise Removed")
         plot_prediction(kc_filtered, "Kc", title="Filtered by SWC")
 
-    if trapezoidal_path is not None:
-        allen = read_allen(trapezoidal_path)
-        kc_trapezoidal = make_trapezoidal(kc_filtered.copy(), allen, output_folder)
-
     make_plot(kc_filtered, predictions=False)
-    make_plot(kc_filtered, kc_trapezoidal)
     # make_plot(kc_filtered, measures=False)
 
     print(f'\n\n{"-"*21}')
