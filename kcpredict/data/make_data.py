@@ -49,19 +49,24 @@ def get_raw_data(fname):  # sourcery skip: use-contextlib-suppress
 def make_pickle(df, out):
     try:
         df.to_pickle(out)
-    except Exception:
-        print("Something went wrong writing Pickle file.\nTry again")
+    except Exception as e:
+        print(f"Something went wrong writing Pickle file: {e}.\nTry again")
 
 
-def main(input_file, output_file, visualize=True):
+def main(input_file, output_path, visualize=True, root_folder=ROOT_DIR):
     """
     Load raw data from input file, save it to output file, and optionally visualize it.
 
     :param input_file: Path to input file containing raw data
-    :param output_file: Path to output file where data will be saved
+    :param output_path: Path to output file where data will be saved
     :param visualize: Whether to visualize the data (default: True)
     """
     logging.info(f'\n\n{"-"*5} MAKE DATA {"-"*5}\n\n')
+
+    if not isinstance(root_folder, Path):
+        root_folder = Path(root_folder)
+    input_file = root_folder / input_file
+    output_file = root_folder / output_path / "data.pickle"
 
     # Load raw data from input file
     data = get_raw_data(input_file)
@@ -79,10 +84,10 @@ def main(input_file, output_file, visualize=True):
 
     # Optionally visualize the data
     if visualize:
-        data.plot(subplots=True, figsize=(10, 16))
-        savepath = ROOT_DIR / "visualization/data/raw_data.png"
+        data.plot(subplots=True, figsize=(10, 16), title="Raw Data")
+        savepath = root_folder / "visualization/raw_data.png"
         if savepath.exists():
-            plt.savefig(ROOT_DIR / "visualization/data" / "raw_data.png")
+            plt.savefig(root_folder / "visualization" / "raw_data.png")
         else:
             plt.show()
             logging.info("Visualization folder not found. Skipping visualization.")
