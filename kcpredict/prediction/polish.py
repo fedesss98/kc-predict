@@ -47,7 +47,8 @@ def remove_noise(df):
     decomposition = seasonal_decompose(
         df["Kc"], model="additive", period=365, extrapolate_trend=3
     )  #!!!
-    mean_trend = decomposition.trend.mean()
+    # mean_trend = decomposition.trend.mean()
+    mean_trend = decomposition.trend
     df_denoised = (decomposition.seasonal + mean_trend).to_frame(name="Kc")
     df_denoised["Source"] = df["Source"]
     return df_denoised
