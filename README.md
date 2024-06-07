@@ -56,7 +56,12 @@ Alternatively, you can run the main script `kcpredict/kcpredict.py`.
 All you need to do as a user is setting up your configuration file, then all the pipeline is run from start to finish, figures are shown and the output is saved.
 
 ### Setting the Configuration
-Configuration file is written in TOML format which make it easily readable. Settings are divided according to the data pipeline shown before. It is all based on an input/output logic that consent to personalize project folders structure. Each step of the pipeline reads data in an input folder and save processed data in an output folder. An example of a configuration file is given, start making a copy of it before changing parameters. 
+Configuration file is written in TOML format which make it easily readable. 
+Settings are divided according to the data pipeline shown before. 
+It is all based on an input/output logic that consent to personalize project folders structure. 
+Each step of the pipeline reads data in an input folder and save processed data in an output folder. 
+An example of a configuration file is given, named `example_config.toml`. 
+Start making a copy of it and renaming it `config.toml` before changing parameters. 
 
 #### Configure the Project
 Every run of this program is to be considered a new instance of a project. Every project should have its directory. 
