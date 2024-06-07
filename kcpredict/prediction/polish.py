@@ -177,12 +177,12 @@ def main(
     save_data(kc_filtered, output_folder, "kc_filtered")
 
     multiplot = make_multiplots(kc, kc_inlier, kc_denoised, kc_filtered)
-    multiplot.savefig(root_folder / "kc_postprocessed.png")
+    multiplot.savefig(root_folder / "visualization/kc_postprocessed.png")
     if visualize:
         plt.show()
 
     kc_plot = make_plot(kc_filtered, predictions=False)
-    kc_plot.savefig(root_folder / "kc_filtered.png")
+    kc_plot.savefig(root_folder / "visualization/kc_filtered.png")
     if visualize:
         plt.show()
 
