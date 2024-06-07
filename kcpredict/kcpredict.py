@@ -30,12 +30,6 @@ from pathlib import Path
 
 ROOT_DIR = Path(__file__).parent.parent
 
-POSTPROCESS_PARAMETERS = {
-    "contamination": 0.1,
-    "seed": 42,
-    "visualize": True,
-}
-
 
 class KcPredictor:
     def __init__(self, root, *args, **kwargs):
@@ -147,9 +141,7 @@ class KcPredictor:
             shutil.copy(trapezoidal_file, external_data_dir / trapezoidal_file.name)
             logging.info(f"Copied trapezoidal file to external data folder: {external_data_dir}")
 
-
         return project_dir
-
 
     @property
     def models(self):
@@ -182,42 +174,8 @@ class KcPredictor:
             predict(model_name, features=self.features, **self.config["prediction"])
 
 
-
-
-
 def main(root):
     predictor = KcPredictor(root)
-
-
-def second_main(features_set, **kwargs):
-    make_data(**MAKE_DATA_PARAMETERS)
-
-    features = FEATURES[features_set]
-    PREPROCESS_PARAMETERS["features"] = features
-    preprocess_data(**PREPROCESS_PARAMETERS)
-
-    predictions = {}
-
-    for model_name in MODELS.keys():
-        model_name_to_save = f"{model_name.upper()}"
-        MODEL_PARAMETERS = {
-            "model": MODELS[model_name],
-            "model_name": model_name_to_save,
-            "features": features,
-            "visualize_error": False,
-        }
-        trainer = ModelTrainer(**MODEL_PARAMETERS)
-
-        PREDICTION_PARAMETERS["features"] = features
-        predict(model=f"{model_name_to_save}.joblib", **PREDICTION_PARAMETERS)
-
-        POSTPROCESS_PARAMETERS["outfile"] = f"{model_name_to_save}_kc_postprocessed"
-        kc_postprocessed = polish(**POSTPROCESS_PARAMETERS)
-
-        predictions[model_name.upper()] = kc_postprocessed
-
-    kc_postprocessed = pd.concat(predictions, axis=1)
-    # calc_metrics(kc_postprocessed)
 
 
 if __name__ == "__main__":
