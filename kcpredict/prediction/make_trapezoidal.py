@@ -44,8 +44,8 @@ def extract_season_from_allen(allen):
     allen["Season"] = None
 
     for name, group in allen_groups:
-        start = allen.loc[group.index[0], 'Day'].strftime("%d/%m")
-        end = allen.loc[group.index[-1], 'Day'].strftime("%d/%m")
+        start = allen.loc[group.index[0], "Day"].strftime("%d/%m")
+        end = allen.loc[group.index[-1], "Day"].strftime("%d/%m")
         if max_value - 1e-2 <= name <= max_value:
             season = "High"
             print(f"{season} Kc season from {start} to {end}: {name}")
@@ -99,8 +99,12 @@ def add_plot_allen(df, ax):
 
 def add_plot_trapezoidal(df, ax):
     x = df["Day"]
-    y_true = df.apply(lambda x: x['Kc_trapezoidal'] if x['Season'] != 'Mid' else np.nan, axis=1)
-    y_interp = df.apply(lambda x: x['Kc_trapezoidal'] if x['Season'] == 'Mid' else np.nan, axis=1)
+    y_true = df.apply(
+        lambda x: x["Kc_trapezoidal"] if x["Season"] != "Mid" else np.nan, axis=1
+    )
+    y_interp = df.apply(
+        lambda x: x["Kc_trapezoidal"] if x["Season"] == "Mid" else np.nan, axis=1
+    )
     ax.plot(x, y_true, c="green", label="Trapezoidal")
     ax.plot(x, y_interp, c="green", ls="--", label="Interpolated values")
     error_up = y_true + df["Error"]
@@ -141,10 +145,17 @@ def make_plot(df):
     ax.grid(axis="both", linestyle="--")
     ax.xticks = df["Day"]
     plt.show()
-    return ax
+    return fig
 
 
-def main(input_path, output_path, trapezoidal_path, root_folder=ROOT_DIR, visualize=False, **kwargs):
+def main(
+    input_path,
+    output_path,
+    trapezoidal_path,
+    root_folder=ROOT_DIR,
+    visualize=False,
+    **kwargs,
+):
     logging.info(f'{"-"*5} MAKING TRAPEZOIDAL KC {"-"*5}')
 
     if not isinstance(root_folder, Path):
@@ -156,14 +167,22 @@ def main(input_path, output_path, trapezoidal_path, root_folder=ROOT_DIR, visual
     allen = read_allen(trapezoidal_path)
     kc_trapezoidal = make_trapezoidal(kc, allen, output_folder)
 
+    kc_plot = make_plot(kc_trapezoidal)
     if visualize:
-        make_plot(kc_trapezoidal)
+        plt.show()
+
+    # Create the directory to save the figure if it does not exist
+    save_dir = root_folder / "visualization"
+    save_dir.mkdir(parents=True, exist_ok=True)
+    # Save the figure in that directory
+    kc_plot.savefig(save_dir / "Kc_trapezoidal.png")
 
     trpz = kc_trapezoidal.loc[:, ["Day", "Kc_trapezoidal", "Error"]]
     trpz.to_pickle(output_folder / "trapezoidal.pickle")
     trpz.to_csv(output_folder / "trapezoidal.csv")
 
     return trpz
+
 
 if __name__ == "__main__":
     input_path = "data/postprocessed"

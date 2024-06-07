@@ -144,8 +144,7 @@ def make_plot(*frames, trapezoidal=True, measures=True, sma=False, predictions=T
     ax.legend()
     ax.grid(axis="both", linestyle="--")
     ax.xticks = df.index
-    plt.show()
-    return ax
+    return fig
 
 
 # %%
@@ -183,7 +182,16 @@ def main(
         plot_prediction(kc_denoised, "Kc", title="Noise Removed")
         plot_prediction(kc_filtered, "Kc", title="Filtered by SWC")
 
-    make_plot(kc_filtered, predictions=False)
+    kc_plot = make_plot(kc_filtered, predictions=False)
+    if visualize:
+        plt.show()
+
+    # Create the directory to save the figure if it does not exist
+    save_dir = root_folder / "visualization"
+    save_dir.mkdir(parents=True, exist_ok=True)
+    # Save the figure in that directory
+    kc_plot.savefig(save_dir / "Kc_filtered.png")
+
     # make_plot(kc_filtered, measures=False)
 
     print(f'\n\n{"-"*21}')
@@ -193,4 +201,4 @@ def main(
 
 if __name__ == "__main__":
     output_name = "RF_kc_postprocessed"  # Use the model name .upper()
-    main(seed=352, contamination=0.01, visualize=True, outfile=output_name)
+    main(seed=352, contamination=0.01, visualize=True, output_path=output_name)
