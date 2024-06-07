@@ -24,7 +24,7 @@ First things first, you need to clone this repository and pull changes from `bet
 Start creating a new folder where you want to place this code.
 Install Git in your machine and clone this repository in that directory:
 ```git
-git clone https://github.com/fedesss98/kcpredict
+git clone https://github.com/fedesss98/kc-predict.git
 ```
 The created `kc-predict` directory will be your **Root Folder**.
 Now create a new local brach and checkout into it, 
