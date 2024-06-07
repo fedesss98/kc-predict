@@ -153,9 +153,9 @@ def main(
     output_path,
     root_folder,
     visualize,
-    trapezoidal_path=None,
     contamination=0.01,
     seed=352,
+    **kwargs,
 ):
     logging.info(f'{"-"*5} POLISH KC {"-"*5}')
 

@@ -157,7 +157,8 @@ def main(
     trapezoidal_path,
     root_folder=ROOT_DIR,
     visualize=False,
-    reference_series = "Allen",
+    reference_series="Allen",
+    **kwargs
 ):
     logging.info(f'{"-"*5} MAKING TRAPEZOIDAL KC {"-"*5}')
 
