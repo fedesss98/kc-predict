@@ -44,12 +44,8 @@ visualize = false
 input_path = "data/predictions"
 output_path = "data/postprocessed"
 # The Allen Trapezoidal file must have a first column called 'Day' and one 'Allen' column
-<<<<<<< Updated upstream
 trapezoidal_path = "data/external/trapezoidal_us_arm.csv"
-reference_series = "Allen"
-=======
-trapezoidal_path = "us_arm_fede/data/trapezoidal_us_arm.csv"
->>>>>>> Stashed changes
+reference_series = "US_ARM_Allen1"
 contamination = 0.01
 seed = 42
 visualize = true
