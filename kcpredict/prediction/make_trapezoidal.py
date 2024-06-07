@@ -12,8 +12,12 @@ from pathlib import Path
 
 ROOT_DIR = Path(__file__).parent.parent.parent
 
+NOT_ALLEN_COLUMNS = [
+    "Day", "Kc", "Source", "Kc_trapezoidal", "Error", "Season"
+]
 
-def read_allen(path):
+
+def read_allen(path, reference_col="Allen"):
     allen = pd.read_csv(
         path,
         sep=";",
@@ -23,21 +27,19 @@ def read_allen(path):
         dayfirst=True,
         index_col=0,
     )
-    try:
-        allen = allen.loc[:, "Allen"]
-    except IndexError as e:
+    if reference_col not in allen.columns:
         raise IndexError(
-            f"Allen Trapezoidal data must contain one column named 'Allen': {e}"
-        ) from e
+            "Allen Trapezoidal data must contain one column named 'Reference'"
+        )
 
     return allen
 
 
-def extract_season_from_allen(allen):
-    allen_groups = allen.groupby("Allen")
+def extract_season_from_allen(allen, reference_col="Allen"):
+    allen_groups = allen.groupby(reference_col)
 
-    max_value = allen["Allen"].max()
-    min_value = allen["Allen"].min()
+    max_value = allen[reference_col].max()
+    min_value = allen[reference_col].min()
 
     print(f"Max: {max_value}, Min: {min_value}")
 
@@ -90,10 +92,11 @@ def make_trapezoidal(kc, allen, output_folder=ROOT_DIR / "data/predicted"):
     return trapezoidal_df.drop("year", axis=1)
 
 
-def add_plot_allen(df, ax):
-    x = df["Day"]
-    y = df["Allen"]
-    ax.plot(x, y, c="blue", alpha=0.8, label="Allen")
+def add_plot_allen(allen, ax):
+    x = allen.index
+    for col in allen.columns:
+        y = allen[col]
+        ax.plot(x, y, label=col)
     return ax
 
 
@@ -127,12 +130,12 @@ def add_plot_predictions(df, ax):
     return ax
 
 
-def make_plot(df):
+def make_plot(df, allen):
     fig, ax = plt.subplots(figsize=(12, 8))
     ax.set_title("Kc Trapezoidal Reconstruction")
 
     # Plot Allen Trapezoidal
-    add_plot_allen(df, ax)
+    add_plot_allen(allen, ax)
     # Plot Postprocessed Kc Trapezoidal
     add_plot_trapezoidal(df, ax)
     # Plot Measured Kc
@@ -154,7 +157,7 @@ def main(
     trapezoidal_path,
     root_folder=ROOT_DIR,
     visualize=False,
-    **kwargs,
+    reference_series = "Allen",
 ):
     logging.info(f'{"-"*5} MAKING TRAPEZOIDAL KC {"-"*5}')
 
@@ -164,10 +167,10 @@ def main(
     output_folder = root_folder / output_path
 
     kc = pd.read_pickle(output_folder / "kc_filtered.pickle")
-    allen = read_allen(trapezoidal_path)
+    allen = read_allen(trapezoidal_path, reference_series)
     kc_trapezoidal = make_trapezoidal(kc, allen, output_folder)
 
-    kc_plot = make_plot(kc_trapezoidal)
+    kc_plot = make_plot(kc_trapezoidal, allen)
     if visualize:
         plt.show()
 

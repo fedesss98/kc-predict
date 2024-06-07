@@ -45,6 +45,7 @@ input_path = "data\\predictions"
 output_path = "data\\postprocessed"
 # The Allen Trapezoidal file must have a first column called 'Day' and one 'Allen' column
 trapezoidal_path = "data/external/trapezoidal_us_arm.csv"
+reference_series = "Allen"
 contamination = 0.01
 seed = 42
 visualize = true
