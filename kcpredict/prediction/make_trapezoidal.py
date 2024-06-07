@@ -62,13 +62,14 @@ def extract_season_from_allen(allen, reference_col="Allen"):
     return allen
 
 
-def make_trapezoidal(kc, allen, output_folder=ROOT_DIR / "data/predicted"):
+def make_trapezoidal(kc, allen, reference_col="Allen"):
     kc = kc.reset_index()
     # First recognize seasons based on Allen DataFrame
-    allen_seasoned = extract_season_from_allen(allen.reset_index())
+    allen_seasoned = extract_season_from_allen(allen.reset_index(), reference_col)
 
     allen_seasoned["month_day"] = allen_seasoned["Day"].dt.strftime("%m-%d")
     kc["month_day"] = kc["Day"].dt.strftime("%m-%d")
+
 
     df = pd.merge(kc, allen_seasoned, on="month_day", suffixes=(None, "_Allen"))
     df = df.sort_values("Day").drop(["month_day", "Day_Allen"], axis=1)
@@ -93,10 +94,12 @@ def make_trapezoidal(kc, allen, output_folder=ROOT_DIR / "data/predicted"):
     return trapezoidal_df.drop("year", axis=1)
 
 
-def add_plot_allen(allen, ax):
-    x = allen.index
-    for col in allen.columns:
-        y = allen[col]
+def add_plot_allen(df, allen_series, ax):
+    x = df["Day"]
+    if 'Day' in allen_series:
+        allen_series.remove('Day')
+    for col in allen_series:
+        y = df[col]
         ax.plot(x, y, label=col)
     return ax
 
@@ -136,7 +139,7 @@ def make_plot(df, allen):
     ax.set_title("Kc Trapezoidal Reconstruction")
 
     # Plot Allen Trapezoidal
-    add_plot_allen(allen, ax)
+    add_plot_allen(df, list(allen.columns), ax)
     # Plot Postprocessed Kc Trapezoidal
     add_plot_trapezoidal(df, ax)
     # Plot Measured Kc
@@ -172,17 +175,14 @@ def main(
 
     kc = pd.read_pickle(output_folder / "kc_filtered.pickle")
     allen = read_allen(trapezoidal_path, reference_series)
-    kc_trapezoidal = make_trapezoidal(kc, allen, output_folder)
+    kc_trapezoidal = make_trapezoidal(kc, allen, reference_series)
 
     kc_plot = make_plot(kc_trapezoidal, allen)
     if visualize:
         plt.show()
 
-    # Create the directory to save the figure if it does not exist
-    save_dir = root_folder / "visualization"
-    save_dir.mkdir(parents=True, exist_ok=True)
-    # Save the figure in that directory
-    kc_plot.savefig(save_dir / "Kc_trapezoidal.png")
+    # Save the figure
+    kc_plot.savefig(root_folder / "visualization/kc_trapezoidal.png")
 
     trpz = kc_trapezoidal.loc[:, ["Day", "Kc_trapezoidal", "Error"]]
     trpz.to_pickle(output_folder / "trapezoidal.pickle")
@@ -196,6 +196,7 @@ if __name__ == "__main__":
     output_path = "data/postprocessed"
     root_folder = ROOT_DIR / "data/us_arm_fede"
     trapezoidal_path = ROOT_DIR / "data/external/trapezoidal_us_arm.csv"
+    reference_series = "US_ARM_Allen1"
     visualize = True
 
-    main(input_path, output_path, trapezoidal_path, root_folder, visualize)
+    main(input_path, output_path, trapezoidal_path, root_folder, visualize, reference_series)
