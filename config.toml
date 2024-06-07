@@ -3,16 +3,16 @@
 # the raw data extracted in make-data are saved in an output folder named "data\\raw"
 # as when creating kc series the ETo is searched automatically in that folder
 id = 1
-project_dir = "G:\\UNIPA\\DOTTORATO\\MACHINE_LEARNING\\crop_coefficient\\kc-predict\\data\\us_arm_fede"
+project_dir = "./us_arm_fede"
 
 [make-data]
-input_file = "data\\raw\\data_us_arm.csv"
-output_path = "data\\raw"
+input_file = "us_arm_fede/data/data_us_arm.csv"
+output_path = "data/raw"
 visualize = false
 
 [preprocess]
-input_path = "data\\raw"
-output_path = "data\\preprocessed"
+input_path = "data/raw"
+output_path = "data/preprocessed"
 features = ["DOY", "Tmin", "Tmax", "Tdew", "Uwind", "Vwind", "Rs"]
 scaler = "MinMax"
 folds = 2
@@ -36,16 +36,20 @@ random_state = 42
 # weights = "distance"
 
 [prediction]
-input_path = "data\\preprocessed"
-output_path = "data\\predictions"
+input_path = "data/preprocessed"
+output_path = "data/predictions"
 visualize = false
 
 [postprocess]
-input_path = "data\\predictions"
-output_path = "data\\postprocessed"
+input_path = "data/predictions"
+output_path = "data/postprocessed"
 # The Allen Trapezoidal file must have a first column called 'Day' and one 'Allen' column
+<<<<<<< Updated upstream
 trapezoidal_path = "data/external/trapezoidal_us_arm.csv"
 reference_series = "Allen"
+=======
+trapezoidal_path = "us_arm_fede/data/trapezoidal_us_arm.csv"
+>>>>>>> Stashed changes
 contamination = 0.01
 seed = 42
 visualize = true
