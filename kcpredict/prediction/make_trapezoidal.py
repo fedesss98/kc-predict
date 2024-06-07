@@ -12,14 +12,11 @@ from pathlib import Path
 
 ROOT_DIR = Path(__file__).parent.parent.parent
 
-NOT_ALLEN_COLUMNS = [
-    "Day", "Kc", "Source", "Kc_trapezoidal", "Error", "Season"
-]
+NOT_ALLEN_COLUMNS = ["Day", "Kc", "Source", "Kc_trapezoidal", "Error", "Season"]
 
 
 def read_allen(path, reference_col="Allen"):
-    allen = pd.read_csv(
-        path,
+    reading_kwargs = dict(
         sep=";",
         decimal=",",
         parse_dates=True,
@@ -27,6 +24,10 @@ def read_allen(path, reference_col="Allen"):
         dayfirst=True,
         index_col=0,
     )
+    try:
+        allen = pd.read_csv(path, **reading_kwargs)
+    except FileNotFoundError:
+        allen = pd.read_csv(root_folder / path, **reading_kwargs)
     if reference_col not in allen.columns:
         raise IndexError(
             "Allen Trapezoidal data must contain one column named 'Reference'"
@@ -158,7 +159,7 @@ def main(
     root_folder=ROOT_DIR,
     visualize=False,
     reference_series="Allen",
-    **kwargs
+    **kwargs,
 ):
     logging.info(f'{"-"*5} MAKING TRAPEZOIDAL KC {"-"*5}')
 
@@ -166,6 +167,8 @@ def main(
         root_folder = Path(root_folder)
     input_folder = root_folder / input_path
     output_folder = root_folder / output_path
+    if not trapezoidal_path.exists():
+        trapezoidal_path = root_folder / trapezoidal_path
 
     kc = pd.read_pickle(output_folder / "kc_filtered.pickle")
     allen = read_allen(trapezoidal_path, reference_series)
