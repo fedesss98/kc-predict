@@ -176,27 +176,30 @@ def main(
 
     save_data(kc_filtered, output_folder, "kc_filtered")
 
-    if visualize:
-        plot_prediction(kc, "Kc", title="Raw Predicted Kc")
-        plot_prediction(kc_inlier, "Kc", title="Outliers Removed")
-        plot_prediction(kc_denoised, "Kc", title="Noise Removed")
-        plot_prediction(kc_filtered, "Kc", title="Filtered by SWC")
-
-    kc_plot = make_plot(kc_filtered, predictions=False)
+    multiplot = make_multiplots(kc, kc_inlier, kc_denoised, kc_filtered)
+    multiplot.savefig(root_folder / "kc_postprocessed.png")
     if visualize:
         plt.show()
 
-    # Create the directory to save the figure if it does not exist
-    save_dir = root_folder / "visualization"
-    save_dir.mkdir(parents=True, exist_ok=True)
-    # Save the figure in that directory
-    kc_plot.savefig(save_dir / "Kc_filtered.png")
+    kc_plot = make_plot(kc_filtered, predictions=False)
+    kc_plot.savefig(root_folder / "kc_filtered.png")
+    if visualize:
+        plt.show()
 
     # make_plot(kc_filtered, measures=False)
 
     print(f'\n\n{"-"*21}')
 
     return kc_filtered
+
+
+def make_multiplots(kc, kc_inlier, kc_denoised, kc_filtered):
+    fig, axs = plt.subplots(4, figsize=(20, 10), tight_layout=True)
+    plot_prediction(kc, "Kc", title="Raw Predicted Kc", ax=axs[0])
+    plot_prediction(kc_inlier, "Kc", title="Outliers Removed", ax=axs[1])
+    plot_prediction(kc_denoised, "Kc", title="Noise Removed", ax=axs[2])
+    plot_prediction(kc_filtered, "Kc", title="Filtered by SWC", ax=axs[3])
+    return fig
 
 
 if __name__ == "__main__":

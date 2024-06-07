@@ -108,18 +108,18 @@ def rescale_series(eta, scaler, input_folder):
     return eta, eto
 
 
-def plot_prediction(df, series_name, title=None):
-    g = sns.relplot(data=df,
+def plot_prediction(df, series_name, title=None, ax=None):
+    g = sns.scatterplot(data=df,
         x="Day",
         y=series_name,
         hue="Source",
-        height=6,
-        aspect=1.4,
+        # height=6,
+        # aspect=1.4,
+        ax=ax
     )
     if title is not None:
-        g.figure.suptitle(title)
-    plt.show()
-    return None
+        ax.set_title(title)
+    return ax
 
 
 def plot_linear(model, measures, features):
@@ -183,6 +183,7 @@ def main(
             plot_prediction(eta, "ETa", "Measured and Predicted ETa (scaled)")
         else:
             plot_prediction(eta_rescaled, "ETa", "Measured and Predicted ETa")
+        plt.show()
         plot_linear(model, measures, features)
     # Save ETa
     if scaled:
@@ -201,6 +202,7 @@ def main(
 
     if visualize:
         plot_prediction(kc, "Kc", "Measured and Predicted Kc")
+        plt.show()
     # Save Kc
     pd.to_pickle(kc, output_folder / "kc_predicted.pickle")
     logging.info(f"Predictions saved in:\n{output_folder}")
