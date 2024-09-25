@@ -131,13 +131,15 @@ class KcPredictor:
             logging.info(f"Created models folder: {models_dir}")
 
         # Create an external data folder if the trapezoidal file is given
-        if self.config["postprocess"].get("trapezoidal_file", None):
+        if self.config["postprocess"].get("trapezoidal_path", None):
             external_data_dir = project_dir / "data" / "external"
             if not os.path.isdir(external_data_dir):
                 os.makedirs(external_data_dir)
                 logging.info(f"Created external data folder: {external_data_dir}")
             # Copy the trapezoidal file to the external data folder
-            trapezoidal_file = Path(self.config["postprocess"]["trapezoidal_file"])
+            trapezoidal_file = Path(self.config["postprocess"]["trapezoidal_path"])
+            if not trapezoidal_file.is_file():
+                trapezoidal_file = '../' / trapezoidal_file
             shutil.copy(trapezoidal_file, external_data_dir / trapezoidal_file.name)
             logging.info(f"Copied trapezoidal file to external data folder: {external_data_dir}")
 

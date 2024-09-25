@@ -15,7 +15,7 @@ ROOT_DIR = Path(__file__).parent.parent.parent
 NOT_ALLEN_COLUMNS = ["Day", "Kc", "Source", "Kc_trapezoidal", "Error", "Season"]
 
 
-def read_allen(path, reference_col="Allen"):
+def read_allen(path, root_folder, reference_col="Allen"):
     reading_kwargs = dict(
         sep=";",
         decimal=",",
@@ -174,7 +174,7 @@ def main(
         trapezoidal_path = root_folder / trapezoidal_path
 
     kc = pd.read_pickle(output_folder / "kc_filtered.pickle")
-    allen = read_allen(trapezoidal_path, reference_series)
+    allen = read_allen(trapezoidal_path, root_folder, reference_series)
     kc_trapezoidal = make_trapezoidal(kc, allen, reference_series)
 
     kc_plot = make_plot(kc_trapezoidal, allen)
