@@ -17,6 +17,8 @@ import logging
 
 from pathlib import Path
 
+from sklearn.linear_model import LinearRegression
+
 ROOT_DIR = Path(__file__).parent.parent.parent
 
 
@@ -132,14 +134,21 @@ def plot_prediction(df, series_name, title=None, ax=None):
 
 def plot_linear(y_measured, y_predicted, features):
     max_vertex = 1.1 * max(y_measured.max(), y_predicted.max())
+
     fig, ax = plt.subplots(figsize=(5, 5), tight_layout=True)
-    ax.scatter(y_measured, y_predicted, c="k")
+    ax.scatter(y_measured, y_predicted, c="k", s=5, alpha=0.5)
     ax.plot([0, max_vertex], [0, max_vertex], "r--")
     ax.set_xlim(0, max_vertex)
     ax.set_ylim(0, max_vertex)
     ax.set_xlabel("Observed ETa [mm/day]")
     ax.set_ylabel("Predicted ETa [mm/day]")
     # ax.grid(True)
+
+    # Linear Regression
+    reg = LinearRegression(fit_intercept=False).fit(y_measured.reshape(-1, 1), y_predicted)
+    ax.plot([0, max_vertex], [0, reg.coef_[0] * max_vertex], "k-", alpha=0.5, label=f"y={reg.coef_[0]:.2f}x")
+    ax.legend()
+
     plt.show()
     return None
 
