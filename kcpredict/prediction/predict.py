@@ -48,12 +48,17 @@ def fill_eta(eta, measured):
     return total_eta
 
 
-def rescale_eta(eta, scaler, input_folder, index=None):
+def rescale_eta(eta, scaler, input_folder, index=None, numpy=False):
     # Create fake DataFrame with fake features
     df = pd.read_pickle(input_folder / "preprocessed.pickle")
-    df["ETa"] = eta["ETa"]
-    rescaled_eta = scaler.inverse_transform(df)[:, [-1]].ravel()
     if index is not None:
+        df = df.loc[index]
+    try:
+        df["ETa"] = eta["ETa"]
+    except IndexError:
+        df["ETa"] = eta
+    rescaled_eta = scaler.inverse_transform(df)[:, [-1]].ravel()
+    if not numpy and index is not None:
         # Create a DataFrame
         rescaled_eta = pd.DataFrame(rescaled_eta, columns=["ETa"], index=index)
         rescaled_eta["Source"] = eta["Source"]
@@ -98,7 +103,10 @@ def make_eto(eta_index, root_folder):
 def rescale_series(eta, scaler, input_folder):
     # Reset original DataFrame with feature measures and predicted target
     df = pd.read_pickle(input_folder / "preprocessed.pickle")
-    df["ETa"] = eta["ETa"]
+    try:
+        df["ETa"] = eta["ETa"]
+    except IndexError:
+        df["ETa"] = eta
     rescaled_df = scaler.inverse_transform(df)
     df = pd.DataFrame(rescaled_df, columns=df.columns, index=df.index)
     eta["ETa"] = df["ETa"].to_frame()
@@ -115,23 +123,23 @@ def plot_prediction(df, series_name, title=None, ax=None):
         hue="Source",
         # height=6,
         # aspect=1.4,
-        ax=ax
+        # ax=ax
     )
     if title is not None:
-        ax.set_title(title)
+        g.set_title(title)
     return ax
 
 
-def plot_linear(model, measures, features):
-    X = measures.loc[:, features]
-    y_measured = measures["ETa"].values
-    y_predicted = model.predict(X)
-    fig, ax = plt.subplots(figsize=(10, 10), tight_layout=True)
+def plot_linear(y_measured, y_predicted, features):
+    max_vertex = 1.1 * max(y_measured.max(), y_predicted.max())
+    fig, ax = plt.subplots(figsize=(5, 5), tight_layout=True)
     ax.scatter(y_measured, y_predicted, c="k")
-    ax.plot([-1, 0, 1], [-1, 0, 1], "r--")
-    ax.set_xlim(-1, 1)
-    ax.set_ylim(-1, 1)
-    ax.grid(True)
+    ax.plot([0, max_vertex], [0, max_vertex], "r--")
+    ax.set_xlim(0, max_vertex)
+    ax.set_ylim(0, max_vertex)
+    ax.set_xlabel("Observed ETa [mm/day]")
+    ax.set_ylabel("Predicted ETa [mm/day]")
+    # ax.grid(True)
     plt.show()
     return None
 
@@ -146,7 +154,7 @@ def compute_kc(eta, eto):
 
 def main(
     model_name, input_path=None, output_path=None, root_folder = ROOT_DIR,
-    features=None, visualize=True, scaled=True, 
+    features=None, visualize=True, scaled=False,
 ):
     logging.info(f"\n{'-'*7} PREDICT ETa {'-'*7}\n\n")
 
@@ -170,21 +178,29 @@ def main(
     try:
         model = load_model(root_folder / "models" / f"{model_name}.joblib")
         logging.info(f"Predicting from features:\n" f"{X.columns.tolist()}")
+    except FileNotFoundError as e:
+        raise FileNotFoundError(f"Error finding the model. Remember to include file extension.") from e
+    else:
         eta_predicted = model.predict(X)
         # Make a DataFrame of predictions
         eta = pd.DataFrame(eta_predicted, columns=["ETa Predicted"], index=X.index)
-    except FileNotFoundError:
-        logging.error("Error finding the model. Remember to include file extension.")
     # Make ETa DataFrame with measures and predictions
     eta = fill_eta(eta, measures)
     eta_rescaled = rescale_eta(eta, scaler, input_folder, index=eta.index)
+
     if visualize:
         if scaled:
             plot_prediction(eta, "ETa", "Measured and Predicted ETa (scaled)")
+            plt.show()
+            # plot_linear(y_measured, y_predicted, features)
         else:
+            # Compute scaled predictions
+            y_measured = eta_rescaled.loc[eta_rescaled["Source"] == "Measured", "ETa"].values
+            X_measured = measures.loc[:, features]
+            y_predicted = rescale_eta(model.predict(X_measured), scaler, input_folder, index=X_measured.index, numpy=True)
             plot_prediction(eta_rescaled, "ETa", "Measured and Predicted ETa")
-        plt.show()
-        plot_linear(model, measures, features)
+            plt.show()
+            plot_linear(y_measured, y_predicted, features)
     # Save ETa
     if scaled:
         pd.to_pickle(eta, output_folder / "eta_predicted.pickle")
