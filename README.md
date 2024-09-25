@@ -4,7 +4,7 @@
 Here lies the code to predict Evapotranspiration (ETa) and thus the Crop-Coefficient (Kc) of a given crop using Machine Learning (ML) models. 
 This code produces predictions of ETa .
 
-**The most updated version of this code is currently in development in the branch** `better-interface`.
+**The most updated version of this code is currently in development in the branch** `main`.
 
 Data pipeline is as follows:
 - **Preprocessing Data**
