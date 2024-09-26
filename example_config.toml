@@ -3,10 +3,11 @@
 # the raw data extracted in make-data are saved in an output folder named "data\\raw"
 # as when creating kc series the ETo is searched automatically in that folder
 id = 1
-project_dir = "./us_arm_fede"
+project_dir = "data/us_arm_fede"
+#dir_tempalete = "data/experiment"
 
 [make-data]
-input_file = "us_arm_fede/data/data_us_arm.csv"
+input_file = "data/raw/data_us_arm.csv"
 output_path = "data/raw"
 visualize = false
 
@@ -38,7 +39,7 @@ random_state = 42
 [prediction]
 input_path = "data/preprocessed"
 output_path = "data/predictions"
-visualize = false
+visualize = true
 
 [postprocess]
 input_path = "data/predictions"
