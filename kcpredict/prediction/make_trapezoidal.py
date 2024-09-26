@@ -42,7 +42,7 @@ def extract_season_from_allen(allen, reference_col="Allen"):
     max_value = allen[reference_col].max()
     min_value = allen[reference_col].min()
 
-    print(f"Max: {max_value}, Min: {min_value}")
+    logging.info(f"Max: {max_value}, Min: {min_value}")
 
     allen["Season"] = None
 
@@ -51,10 +51,10 @@ def extract_season_from_allen(allen, reference_col="Allen"):
         end = allen.loc[group.index[-1], "Day"].strftime("%d/%m")
         if max_value - 1e-2 <= name <= max_value:
             season = "High"
-            print(f"{season} Kc season from {start} to {end}: {name}")
+            logging.info(f"{season} Kc season from {start} to {end}: {name}")
         elif min_value <= name <= min_value + 1e-2:
             season = "Low"
-            print(f"{season} Kc season from {start} to {end}: {name}")
+            logging.info(f"{season} Kc season from {start} to {end}: {name}")
         else:
             season = "Mid"
         allen.loc[group.index, "Season"] = season

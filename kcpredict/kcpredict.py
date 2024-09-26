@@ -65,7 +65,7 @@ class KcPredictor:
 
         # Train and save the best models on a KFold cross-validation
         self.make_model()
-        #Predict ETa using the best models and make the Kc series
+        # Predict ETa using the best models and make the Kc series
         self.predict_eta()
 
         # Postprocess the predictions

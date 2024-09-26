@@ -188,7 +188,7 @@ def main(
 
     # make_plot(kc_filtered, measures=False)
 
-    print(f'\n\n{"-"*21}')
+    logging.info(f'\n\n{"-"*21}')
 
     return kc_filtered
 
