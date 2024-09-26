@@ -20,6 +20,8 @@ import pandas as pd
 import seaborn as sns
 import logging
 
+import tomli
+
 try:
     from predict import plot_prediction
 except ModuleNotFoundError:
@@ -203,5 +205,10 @@ def make_multiplots(kc, kc_inlier, kc_denoised, kc_filtered):
 
 
 if __name__ == "__main__":
-    output_name = "RF_kc_postprocessed"  # Use the model name .upper()
-    main(seed=352, contamination=0.01, visualize=True, output_path=output_name)
+    # Read the configuration file available in a project directory
+    project_dir = ROOT_DIR / "data/us_arm_fede"
+    print(f"Reading configuration file from {project_dir}")
+    with open(project_dir / "config.toml", "rb") as f:
+        config = tomli.load(f)
+
+    main(root_folder=project_dir, **config["postprocess"])

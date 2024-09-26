@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 import logging
 
+import tomli
+
 try:
     from predict import plot_prediction
 except ModuleNotFoundError:
@@ -30,7 +32,8 @@ def read_allen(path, root_folder, reference_col="Allen"):
         allen = pd.read_csv(root_folder / path, **reading_kwargs)
     if reference_col not in allen.columns:
         raise IndexError(
-            "Allen Trapezoidal data must contain one column named 'Reference'"
+            "Allen Trapezoidal data must contain one column named 'Reference',"
+            " else specify the column name in the config file"
         )
 
     return allen
@@ -69,7 +72,6 @@ def make_trapezoidal(kc, allen, reference_col="Allen"):
 
     allen_seasoned["month_day"] = allen_seasoned["Day"].dt.strftime("%m-%d")
     kc["month_day"] = kc["Day"].dt.strftime("%m-%d")
-
 
     df = pd.merge(kc, allen_seasoned, on="month_day", suffixes=(None, "_Allen"))
     df = df.sort_values("Day").drop(["month_day", "Day_Allen"], axis=1)
@@ -192,11 +194,10 @@ def main(
 
 
 if __name__ == "__main__":
-    input_path = "data/postprocessed"
-    output_path = "data/postprocessed"
-    root_folder = ROOT_DIR / "data/us_arm_fede"
-    trapezoidal_path = ROOT_DIR / "data/external/trapezoidal_us_arm.csv"
-    reference_series = "US_ARM_Allen1"
-    visualize = True
+    # Read the configuration file available in a project directory
+    project_dir = ROOT_DIR / "data/us_arm_fede"
+    print(f"Reading configuration file from {project_dir}")
+    with open(project_dir / "config.toml", "rb") as f:
+        config = tomli.load(f)
 
-    main(input_path, output_path, trapezoidal_path, root_folder, visualize, reference_series)
+    main(root_folder=project_dir, **config["postprocess"])

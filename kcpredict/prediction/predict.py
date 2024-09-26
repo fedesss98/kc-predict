@@ -17,6 +17,7 @@ import logging
 
 from pathlib import Path
 
+import tomli
 from sklearn.linear_model import LinearRegression
 
 ROOT_DIR = Path(__file__).parent.parent.parent
@@ -238,4 +239,18 @@ def main(
 
 
 if __name__ == "__main__":
-    main()
+    # Read the configuration file available in a project directory
+    project_dir = ROOT_DIR / "data/us_arm_fede"
+    print(f"Reading configuration file from {project_dir}")
+    with open(project_dir / "config.toml", "rb") as f:
+        config = tomli.load(f)
+
+    input_path = config["prediction"]["input_path"]
+    output_path = config["prediction"]["output_path"]
+    root_folder = project_dir
+    features = config["preprocess"]["features"]
+    visualize = config["prediction"]["visualize"]
+    scaled = config["prediction"].get("scaled", True)
+
+    for model_name in config["models"].keys():
+        main(model_name, input_path, output_path, root_folder, features, visualize, scaled)
