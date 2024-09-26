@@ -125,10 +125,10 @@ def plot_prediction(df, series_name, title=None, ax=None):
         hue="Source",
         # height=6,
         # aspect=1.4,
-        # ax=ax
+        ax=ax
     )
-    if title is not None:
-        g.set_title(title)
+    if title is not None and ax is not None:
+        ax.set_title(title)
     return ax
 
 
@@ -149,8 +149,7 @@ def plot_linear(y_measured, y_predicted, features):
     ax.plot([0, max_vertex], [0, reg.coef_[0] * max_vertex], "k-", alpha=0.5, label=f"y={reg.coef_[0]:.2f}x")
     ax.legend()
 
-    plt.show()
-    return None
+    return fig
 
 
 def compute_kc(eta, eto):
@@ -209,7 +208,10 @@ def main(
             y_predicted = rescale_eta(model.predict(X_measured), scaler, input_folder, index=X_measured.index, numpy=True)
             plot_prediction(eta_rescaled, "ETa", "Measured and Predicted ETa")
             plt.show()
-            plot_linear(y_measured, y_predicted, features)
+            linear_plot = plot_linear(y_measured, y_predicted, features)
+            linear_plot.savefig(root_folder / "visualization/linear_plot.png")
+            linear_plot.savefig(root_folder / "visualization/linear_plot.pdf")
+            plt.show()
     # Save ETa
     if scaled:
         pd.to_pickle(eta, output_folder / "eta_predicted.pickle")
