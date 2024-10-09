@@ -102,7 +102,7 @@ class KcPredictor:
         if not os.path.isfile(project_dir / raw_data_file):
             if not os.path.isfile(self.root / raw_data_file):
                 raise FileNotFoundError(
-                    "Raw data file not found in project directory or root directory"
+                    f"Raw data file not found in project directory or root directory: {raw_data_file}"
                 )
 
             # First check if destination directory exists

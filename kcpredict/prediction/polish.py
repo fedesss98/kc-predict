@@ -50,8 +50,8 @@ def remove_noise(df):
         df["Kc"], model="additive", period=365, extrapolate_trend=3
     )  #!!!
     # mean_trend = decomposition.trend.mean()
-    mean_trend = decomposition.trend
-    df_denoised = (decomposition.seasonal + mean_trend).to_frame(name="Kc")
+    trend = decomposition.trend
+    df_denoised = (decomposition.seasonal + trend).to_frame(name="Kc")
     df_denoised["Source"] = df["Source"]
     return df_denoised
 
@@ -168,8 +168,9 @@ def main(
 
     kc = pd.read_pickle(input_folder / "kc_predicted.pickle")
 
-    # Outlier removal
+    # Take outlier statistics from the measured data and look for outliers in the whole dataset
     detector = IsolationForest(contamination=contamination, random_state=seed)
+    # Remove outliers
     kc_inlier = remove_outliers(kc, detector)
     # Seasonal decomposition: take seasonal and mean trend and remove noise
     kc_denoised = remove_noise(kc_inlier)

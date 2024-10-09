@@ -43,6 +43,7 @@ class ModelTrainer:
         self.model = model
         self.model_name = model_name
 
+        self.best_model = None
 
         # Find number of folds
         self.k = len(list(self.input_folder.glob("test_fold_*")))
