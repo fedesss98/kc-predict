@@ -35,7 +35,10 @@ from sklearn.impute import IterativeImputer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import KFold
 
-from .make_data import make_pickle
+try:
+    from .make_data import make_pickle
+except ImportError:
+    from make_data import make_pickle
 
 from pathlib import Path
 
@@ -120,7 +123,6 @@ def impute_features(df, features):
 
 def split_folds(df, k, k_seed=2):
     folds = KFold(k, shuffle=True, random_state=k_seed)
-    df = df.dropna()
     folds_data = {}
     for k, [train_index, test_index] in enumerate(folds.split(df)):
         train = df.iloc[train_index]
@@ -145,10 +147,11 @@ def scale_data(df, scaler, scaler_file=ROOT_DIR / "models" / "scaler.joblib"):
         scaled_data = pd.DataFrame(scaled_values, columns=df.columns, index=df.index)
     except Exception as e:
         print(f"Error with the scaler: {str(e)}")
+        scaled_data = pd.DataFrame(df.values, columns=df.columns, index=df.index)
     return scaled_data
 
 
-def main(input_path, output_path, scaler, folds, k_seed, features=None, visualize=True, root_folder=ROOT_DIR):
+def main(input_path, output_path, scaler, folds, k_seed, features=None, visualize=True, root_folder=str(ROOT_DIR)):
     logging.info(f'\n\n{"-"*5} PREPROCESSING {"-"*5}\n\n')
 
     if not isinstance(root_folder, Path):
@@ -174,13 +177,13 @@ def main(input_path, output_path, scaler, folds, k_seed, features=None, visualiz
     # Save and visualize imputed data
     make_pickle(df, output_folder / "imputed.pickle")
 
-    # Save data to predict
+    # Save data to predict blind, where ETa is not measured
     predict = df.loc[~df.index.isin(df.dropna().index), features]
     predict = scale_data(predict, scaler, root_folder / "models/scaler_predict.joblib")
     make_pickle(predict, output_folder / "predict.pickle")
 
-    # Split data into train and test sets
-    folds_data = split_folds(df, folds, k_seed)
+    # Split remaining data into train and test sets; where ETa measures serve to train and test the model
+    folds_data = split_folds(df.dropna(), folds, k_seed)
 
     # Iterate over folds
     for k in range(folds):
@@ -211,4 +214,12 @@ def main(input_path, output_path, scaler, folds, k_seed, features=None, visualiz
 
 
 if __name__ == "__main__":
-    main()
+    project_dir = "../../data/us_arm_fede"
+    input_path = "data/raw"
+    output_path = "data/preprocessed"
+    features = ["DOY", "Tmin", "Tmax", "Tdew", "Uwind", "Vwind", "Rs"]
+    scaler = "MinMax"
+    folds = 2
+    k_seed = 241
+    visualize = False
+    main(input_path, output_path, scaler, folds, k_seed, features, visualize, root_folder=project_dir)
