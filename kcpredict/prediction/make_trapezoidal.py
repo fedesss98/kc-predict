@@ -65,6 +65,23 @@ def extract_season_from_allen(allen, reference_col="Allen"):
     return allen
 
 
+def label_seasons(df):
+    # Initialize the first season
+    current_season = df.loc[0, "Season"]
+    counted_seasons = 1
+    df.loc[0, "Season"] = f"{current_season}_{counted_seasons}"
+
+    # Iterate through the DataFrame and label seasons
+    for i in range(1, len(df)):
+        season = df.loc[i, "Season"]
+        if season != current_season:
+            current_season = season
+            counted_seasons += 1
+        df.loc[i, "Season"] = f"{current_season}_{counted_seasons}"
+
+    return df
+
+
 def make_trapezoidal(kc, allen, reference_col="Allen"):
     kc = kc.reset_index()
     # First recognize seasons based on Allen DataFrame
@@ -74,26 +91,28 @@ def make_trapezoidal(kc, allen, reference_col="Allen"):
     kc["month_day"] = kc["Day"].dt.strftime("%m-%d")
 
     df = pd.merge(kc, allen_seasoned, on="month_day", suffixes=(None, "_Allen"))
-    df = df.sort_values("Day").drop(["month_day", "Day_Allen"], axis=1)
-    df["year"] = df["Day"].dt.year
+    df = df.groupby("Day").max(numeric_only=False).sort_values("Day").reset_index()
+    df = label_seasons(df)
+    df = df.drop(["month_day", "Day_Allen"], axis=1)
     df["Kc_trapezoidal"] = np.nan
     df["Error"] = np.nan
-    groups = df.groupby(["year", "Season"], group_keys=False)
+    groups = df.groupby(["Season"], group_keys=False)
 
     def _make_trapezoidal(group):
         season = group["Season"].iloc[0]
-        if season != "Mid":
+        if season.split("_")[0] != "Mid":
             group["Kc_trapezoidal"] = group["Kc"].mean()
             group["Error"] = group["Kc"].std()
         return group
 
     trapezoidal_df = groups.apply(_make_trapezoidal)
+    trapezoidal_df.sort_values(by="Day", inplace=True)
     # Fill Mid-season values with linear interpolation
     trapezoidal_df["Kc_trapezoidal"] = trapezoidal_df["Kc_trapezoidal"].interpolate(
         method="linear"
     )
 
-    return trapezoidal_df.drop("year", axis=1)
+    return trapezoidal_df
 
 
 def add_plot_allen(df, allen_series, ax):
@@ -195,7 +214,7 @@ def main(
 
 if __name__ == "__main__":
     # Read the configuration file available in a project directory
-    project_dir = ROOT_DIR / "data/us_arm_fede"
+    project_dir = ROOT_DIR / "data/villabate_fede"
     print(f"Reading configuration file from {project_dir}")
     with open(project_dir / "config.toml", "rb") as f:
         config = tomli.load(f)
