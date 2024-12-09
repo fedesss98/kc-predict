@@ -12,13 +12,13 @@ import tomli
 import os
 import shutil
 
-from .data.make_data import main as make_data
-from .data.preprocess import main as preprocess_data
-from .models.make_model import ModelTrainer
-from .prediction.predict import main as predict
-from .prediction.polish import main as polish
-from .prediction.make_trapezoidal import main as make_trapezoidal
-from .models.calc_metrics import main as calc_metrics
+from data.make_data import main as make_data
+from data.preprocess import main as preprocess_data
+from models.make_model import ModelTrainer
+from prediction.predict import main as predict
+from prediction.polish import main as polish
+from prediction.make_trapezoidal import main as make_trapezoidal
+from models.calc_metrics import main as calc_metrics
 
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.neural_network import MLPRegressor
