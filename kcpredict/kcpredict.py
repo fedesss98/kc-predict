@@ -12,13 +12,13 @@ import tomli
 import os
 import shutil
 
-from data.make_data import main as make_data
-from data.preprocess import main as preprocess_data
-from models.make_model import ModelTrainer
-from prediction.predict import main as predict
-from prediction.polish import main as polish
-from prediction.make_trapezoidal import main as make_trapezoidal
-from models.calc_metrics import main as calc_metrics
+from .data.make_data import main as make_data
+from .data.preprocess import main as preprocess_data
+from .models.make_model import ModelTrainer
+from .prediction.predict import main as predict
+from .prediction.polish import main as polish
+from .prediction.make_trapezoidal import main as make_trapezoidal
+from .models.calc_metrics import main as calc_metrics
 
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.neural_network import MLPRegressor
@@ -108,10 +108,13 @@ class KcPredictor:
             # First check if destination directory exists
             if not os.path.isdir(project_dir / raw_data_file.parent):
                 os.makedirs(project_dir / raw_data_file.parent)
-                logging.info(f"Created data folder: {project_dir / raw_data_file.parent}")
+                logging.info(
+                    f"Created data folder: {project_dir / raw_data_file.parent}"
+                )
             # Copy the raw data file to the project directory
             shutil.copy(self.root / raw_data_file, project_dir / raw_data_file)
             logging.info(f"Copied raw data file to project directory: {project_dir}")
+
         # Copy the configuration file to the project directory
         try:
             shutil.copy(self.root / "config.toml", project_dir / "config.toml")
@@ -139,18 +142,20 @@ class KcPredictor:
             # Copy the trapezoidal file to the external data folder
             trapezoidal_file = Path(self.config["postprocess"]["trapezoidal_path"])
             if not trapezoidal_file.is_file():
-                trapezoidal_file = '../' / trapezoidal_file
+                trapezoidal_file = "../" / trapezoidal_file
             shutil.copy(trapezoidal_file, external_data_dir / trapezoidal_file.name)
-            logging.info(f"Copied trapezoidal file to external data folder: {external_data_dir}")
+            logging.info(
+                f"Copied trapezoidal file to external data folder: {external_data_dir}"
+            )
 
         return project_dir
 
     @property
-    def models(self):
+    def models(self) -> dict:
         return self._models
 
     @models.setter
-    def models(self, models_config) -> dict:
+    def models(self, models_config: dict[str , dict]) -> dict:
         models_map = {
             "rf": RandomForestRegressor,
             "mlp": MLPRegressor,
@@ -163,8 +168,10 @@ class KcPredictor:
     def make_model(self):
         for model_name, model in self.models.items():
             model_kwargs = dict(
-                model=model, model_name=model_name, features=self.features,
-                **self.config["prediction"]
+                model=model,
+                model_name=model_name,
+                features=self.features,
+                **self.config["prediction"],
             )
             # Train the model on each fold and save the best-performing one
             trainer = ModelTrainer(**model_kwargs)
