@@ -160,7 +160,7 @@ def make_plot(df, allen):
     ax.set_title("Kc Trapezoidal Reconstruction")
 
     # Plot Allen Trapezoidal
-    add_plot_allen(df, list(allen.columns), ax)
+    # add_plot_allen(df, list(allen.columns), ax)
     # Plot Postprocessed Kc Trapezoidal
     add_plot_trapezoidal(df, ax)
     # Plot Measured Kc
