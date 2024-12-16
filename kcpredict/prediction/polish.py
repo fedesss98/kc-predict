@@ -53,7 +53,7 @@ def remove_noise(df):
     trend = decomposition.trend
     df_denoised = (decomposition.seasonal + trend).to_frame(name="Kc")
     df_denoised["Source"] = df["Source"]
-    return df_denoised
+    return df_denoised, decomposition.resid
 
 
 def swc_filter(df, root_folder=ROOT_DIR / "data/interim"):
@@ -149,6 +149,18 @@ def make_plot(*frames, trapezoidal=True, measures=True, sma=False, predictions=T
     return fig
 
 
+def plot_noise(x, y):
+    fig, ax = plt.subplots(figsize=(12, 8))
+    ax.set_title("Noise removed from Seasonal Decomposition")
+
+    ax.scatter(x, y)
+
+    ax.set_xlabel("Day")
+    ax.set_ylabel("Kc")
+
+    return fig
+
+
 # %%
 def main(
     input_path,
@@ -173,11 +185,12 @@ def main(
     # Remove outliers
     kc_inlier = remove_outliers(kc, detector)
     # Seasonal decomposition: take seasonal and mean trend and remove noise
-    kc_denoised = remove_noise(kc_inlier)
+    kc_denoised, noise = remove_noise(kc_inlier)
     # SWC filter: take data with SWC > 0.21
     kc_filtered = swc_filter(kc_denoised, root_folder=root_folder)
 
     save_data(kc_filtered, output_folder, "kc_filtered")
+    save_data(noise, output_folder, "kc_noise")
 
     multiplot = make_multiplots(kc, kc_inlier, kc_denoised, kc_filtered)
     multiplot.savefig(root_folder / "visualization/kc_postprocessed.png")
@@ -188,7 +201,11 @@ def main(
     kc_plot.savefig(root_folder / "visualization/kc_filtered.png")
     if visualize:
         plt.show()
-
+        
+        # Plot noise
+        noise = plot_noise(kc_denoised.index, noise)
+        noise.savefig(root_folder / "visualization/kc_noise.png")
+        plt.show()
     # make_plot(kc_filtered, measures=False)
 
     logging.info(f'\n\n{"-"*21}')
