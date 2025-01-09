@@ -10,6 +10,7 @@ try:
 except ModuleNotFoundError:
     from .predict import plot_prediction
 
+from typing import Union
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).parent.parent.parent
@@ -17,7 +18,7 @@ ROOT_DIR = Path(__file__).parent.parent.parent
 NOT_ALLEN_COLUMNS = ["Day", "Kc", "Source", "Kc_trapezoidal", "Error", "Season"]
 
 
-def read_allen(path: Path | str, root_folder: Path, reference_col="Allen"):
+def read_allen(path: Union[Path, str], root_folder: Path, reference_col="Allen"):
     reading_kwargs = dict(
         sep=";",
         decimal=",",
