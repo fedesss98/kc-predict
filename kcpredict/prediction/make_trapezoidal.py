@@ -17,7 +17,7 @@ ROOT_DIR = Path(__file__).parent.parent.parent
 NOT_ALLEN_COLUMNS = ["Day", "Kc", "Source", "Kc_trapezoidal", "Error", "Season"]
 
 
-def read_allen(path, root_folder, reference_col="Allen"):
+def read_allen(path: Path | str, root_folder: Path, reference_col="Allen"):
     reading_kwargs = dict(
         sep=";",
         decimal=",",
