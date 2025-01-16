@@ -44,7 +44,7 @@ def main(root, features_used):
 
     # Read features
     features = pd.read_pickle(root / "data/raw/data.pickle")
-    features = features.loc[:, features_used].reset_index()
+    features = features.loc[:, features_used + ['ETa']].reset_index()
 
     # Merge Dataframes
     df = features.merge(noise, on="Day")
@@ -55,6 +55,11 @@ def main(root, features_used):
 
     # Save Plot
     g.savefig(root / "visualization" / "noise_correlations.png")
+
+    # Save Pearson Correlation Coefficient in a file
+    p_corr = df.corr(numeric_only=True)["Residual"]
+    print(p_corr)
+    p_corr.to_csv(root / "data/postprocessed" / "kc_noise_correlations.csv")
 
     return None
 
