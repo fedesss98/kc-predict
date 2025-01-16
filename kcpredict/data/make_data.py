@@ -8,7 +8,6 @@ Read CSV data and make Pickle File
 """
 import matplotlib.pyplot as plt
 import numpy as np
-import openpyxl
 import pandas as pd
 import logging
 
@@ -22,7 +21,7 @@ def get_raw_data(fname):  # sourcery skip: use-contextlib-suppress
         df = pd.read_csv(
             fname,
             sep=";",
-            decimal=",",
+            decimal=".",  #!!!Double check the CSV file!
             index_col=0,
             parse_dates=True,
             infer_datetime_format=True,
@@ -30,6 +29,9 @@ def get_raw_data(fname):  # sourcery skip: use-contextlib-suppress
         )
     elif str(fname).endswith(".xlsx"):
         df = pd.read_excel(fname, decimal=",", index_col=0, parse_dates=True)
+    else:
+        raise FileNotFoundError(f"Impossible to open file {fname} as CSV or XLSX.")
+
     try:
         df["SWC"] = df["SWC"].replace(0, np.NaN)
         df["Week"] = pd.Series(df.index).dt.isocalendar().week.values

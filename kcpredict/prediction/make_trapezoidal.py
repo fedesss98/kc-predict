@@ -21,7 +21,7 @@ NOT_ALLEN_COLUMNS = ["Day", "Kc", "Source", "Kc_trapezoidal", "Error", "Season"]
 def read_allen(path: Union[Path, str], root_folder: Path, reference_col="Allen"):
     reading_kwargs = dict(
         sep=";",
-        decimal=",",
+        decimal=".",  #!!!Double check your files!
         parse_dates=True,
         infer_datetime_format=True,
         dayfirst=True,
@@ -215,7 +215,7 @@ def main(
 
 if __name__ == "__main__":
     # Read the configuration file available in a project directory
-    project_dir = ROOT_DIR / "data/villabate_fede"
+    project_dir = ROOT_DIR / "data/us_cf1_fede"
     print(f"Reading configuration file from {project_dir}")
     with open(project_dir / "config.toml", "rb") as f:
         config = tomli.load(f)
