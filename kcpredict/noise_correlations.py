@@ -2,7 +2,7 @@
 Created by Federico Amato
 16/01/2025
 
-Look at the correlation of the noise extracted
+Look at the correlation and statistics of the noise extracted
 from the Seasonal Decomposition with all the features.
 """
 
@@ -37,6 +37,46 @@ def plot_scattermatrix(data):
     return g
 
 
+def get_statistics(data):
+    minimum = data.min()
+    maximum = data.max()
+    mean = data.mean()
+    median = data.median()
+    std = data.std()
+    var = data.var()  # Unbiased variance normalized by N-1
+    statistics = pd.DataFrame(
+            [minimum, maximum, mean, median, std, var],
+            index = ["Min", "Max", "Mean", "Median", "Std", "Variance"],
+            columns = ["Residual Statistics"]
+        )
+    stats_string = '\n'.join((
+        f"Min: {minimum:.3f}",
+        f"Max: {maximum:.3f}",
+        f"Mean: {mean:.3f}",
+        f"Median: {median:.3f}",
+        f"Std: {std:.3f}",
+        f"Variance: {var:.3f}",
+    ))
+    return stats_string, statistics
+
+
+def plot_statistics(data, x=None, hue=None, statistics=None):
+    if not x:
+        g = sns.histplot(data, kde=True, stat="density", legend=False)
+    else:
+        g = sns.histplot(data, x=x, hue=hue, kde=True, stat="density", multiple="stack")
+    
+    g.set_title("Noise PDF", fontsize=16)
+    if statistics:
+        boxprops = dict(ec='black', fc='white')
+        g.figure.text(0.7, 0.9, statistics, 
+                      fontsize=12, verticalalignment='top', bbox=boxprops)
+    
+    plt.show()
+
+    return g
+
+
 def main(root, features_used):
     # Read noise data
     noise = pd.read_pickle(root / "data/postprocessed" / "kc_noise.pickle").to_frame().reset_index()
@@ -55,11 +95,23 @@ def main(root, features_used):
 
     # Save Plot
     g.savefig(root / "visualization" / "noise_correlations.png")
+    g.savefig(root / "visualization" / "noise_correlations.eps")
 
     # Save Pearson Correlation Coefficient in a file
     p_corr = df.corr(numeric_only=True)["Residual"]
     print(p_corr)
     p_corr.to_csv(root / "data/postprocessed" / "kc_noise_correlations.csv")
+    
+    # Get various statistics of the noise
+    statistics, csv = get_statistics(noise["Residual"])
+    print()
+    print(csv)
+    csv.to_csv(root / "data/postprocessed" / "kc_noise_statistics.csv", header=False)
+
+    # Plot Probability Distribution Function
+    plot_statistics(noise, statistics=statistics)
+    g.savefig(root / "visualization" / "noise_statistics.png")
+    g.savefig(root / "visualization" / "noise_statistics.eps")
 
     return None
 
