@@ -16,8 +16,10 @@ from pathlib import Path
 
 parser = argparse.ArgumentParser(description="Noise inspection")
 parser.add_argument("-p", "--project", type=str, default="", help="Project folder name to inspect noise.")
+parser.add_argument("-v", "--verbose", action="store_true", help="Whether or not to display plots.")
 
-def plot_scattermatrix(data):
+
+def plot_scattermatrix(data, display=True):
     g = sns.relplot(data, x="value", y="Residual",
                     col="Feature", col_wrap=3,
                     facet_kws={"sharey":True, "sharex":False},
@@ -33,7 +35,9 @@ def plot_scattermatrix(data):
 
     g.figure.subplots_adjust(wspace=0.03)
 
-    plt.show()
+    if display:
+        plt.show()
+    
     return g
 
 
@@ -60,24 +64,31 @@ def get_statistics(data):
     return stats_string, statistics
 
 
-def plot_statistics(data, x=None, hue=None, statistics=None):
+def plot_statistics(data, x=None, hue=None, statistics=None, display=True):
     if not x:
-        g = sns.histplot(data, kde=True, stat="density", legend=False)
+        g = sns.displot(data, kde=True, stat="density", legend=False)
     else:
-        g = sns.histplot(data, x=x, hue=hue, kde=True, stat="density", multiple="stack")
+        g = sns.displot(data, x=x, hue=hue, kde=True, stat="density", multiple="stack")
     
-    g.set_title("Noise PDF", fontsize=16)
+    g.axes[0, 0].set_title("Noise PDF", fontsize=16)
+
+    # Draw lines for the upper and right side of each axis
+    for ax in g.axes.flat:
+        ax.spines['top'].set_visible(True)
+        ax.spines['right'].set_visible(True)
+
     if statistics:
         boxprops = dict(ec='black', fc='white')
         g.figure.text(0.7, 0.9, statistics, 
                       fontsize=12, verticalalignment='top', bbox=boxprops)
     
-    plt.show()
+    if display:   
+        plt.show()
 
     return g
 
 
-def main(root, features_used):
+def main(root, features_used, verbose=False):
     # Read noise data
     noise = pd.read_pickle(root / "data/postprocessed" / "kc_noise.pickle").to_frame().reset_index()
     noise.rename(columns={"resid": "Residual"}, inplace=True)
@@ -91,7 +102,7 @@ def main(root, features_used):
 
     # Plot Correlations
     df_melted = df.melt(id_vars=["Residual"], var_name="Feature")  #Each feature become a category
-    g = plot_scattermatrix(df_melted)
+    g = plot_scattermatrix(df_melted, display=verbose)
 
     # Save Plot
     g.savefig(root / "visualization" / "noise_correlations.png")
@@ -109,9 +120,9 @@ def main(root, features_used):
     csv.to_csv(root / "data/postprocessed" / "kc_noise_statistics.csv", header=False)
 
     # Plot Probability Distribution Function
-    plot_statistics(noise, statistics=statistics)
-    g.savefig(root / "visualization" / "noise_statistics.png")
-    g.savefig(root / "visualization" / "noise_statistics.eps")
+    g_stats = plot_statistics(noise, statistics=statistics, display=verbose)
+    g_stats.savefig(root / "visualization" / "noise_statistics.png")
+    g_stats.savefig(root / "visualization" / "noise_statistics.eps")
 
     return None
 
@@ -134,4 +145,4 @@ if __name__ == "__main__":
 
     proj_root = Path(".") / project_name
 
-    main(proj_root, features)
+    main(proj_root, features, args.verbose)
