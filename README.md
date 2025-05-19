@@ -29,15 +29,15 @@ git clone https://github.com/fedesss98/kc-predict.git
 The created `kc-predict` directory will be your **Root Folder**.
 Now create a new local brach and checkout into it, 
 ```git
-git checkout -b better-interface
+git checkout -b new-branch
 ```
 Then fetch new commits from the remote repository
 ```git
 git fetch
 ```
-and pull changes in the current local `better-interface` branch,
+and pull changes in the current local `new-branch` branch,
 ```git
-git pull origin better-interface
+git pull origin new-branch
 ```
 \
 You will need Python along with different libraries to run this code: the easiest way is to set up or update a Conda Environment using the file `environment.yml`.
