@@ -13,7 +13,7 @@ Compute various metrics comparing postprocessed KC with:
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import root_mean_squared_error
 
 from pathlib import Path
 
@@ -62,7 +62,7 @@ def calc_errors(true, predictions, metric_name):
     for m in models:
         model_predictions = predictions.loc[:, (m, "Kc")].dropna()
         df = pd.concat([true, model_predictions], axis=1, join="inner")
-        rmse = mean_squared_error(df.iloc[:, 0], df.iloc[:, 1], squared=False)
+        rmse = root_mean_squared_error(df.iloc[:, 0], df.iloc[:, 1])
         print(f"{m} RMSE {metric_name}: {rmse:.4f}")
         errors.append(rmse)
     return errors

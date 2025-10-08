@@ -24,7 +24,7 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.svm import SVR
 from sklearn.gaussian_process import GaussianProcessRegressor
 
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import root_mean_squared_error, r2_score
 
 from pathlib import Path
 
@@ -86,13 +86,13 @@ class ModelTrainer:
         prediction_test = model.predict(X_test)
         # Compute scores on scaled values
         r2_scaled = r2_score(y_test, prediction_test)
-        rmse_scaled = mean_squared_error(y_test, prediction_test, squared=False)
+        rmse_scaled = root_mean_squared_error(y_test, prediction_test)
         # Rescale values
         prediction_test = self.rescale_eta(prediction_test)
         measures_test = self.rescale_eta(y_test.values, y_test.index).squeeze()
         # Compute scores on rescaled values
         r2 = r2_score(measures_test, prediction_test)
-        rmse = mean_squared_error(measures_test, prediction_test, squared=False)
+        rmse = root_mean_squared_error(measures_test, prediction_test)
 
         logging.info(
             f"R2 score on test {k}: {r2_scaled:.2f} - {r2:.2f}"
